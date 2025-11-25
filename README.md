@@ -34,6 +34,11 @@ BIS Smart Grader is an innovative, AI-powered assessment platform designed to st
 *   **Artificial Intelligence:**
     *   [Google Gemini AI](https://ai.google.dev/models/gemini) - Advanced AI model for content generation and analysis.
 
+## 🧑‍💻 Authors
+
+*   [Bavly Hamdy](https://github.com/Bavly-Hamdy)
+*   [Sama Harby](https://github.com/SamaHarby25)
+
 ## 🛠️ Setup
 
 To get the BIS Smart Grader project up and running locally, follow these steps:
