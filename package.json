@@ -2,8 +2,8 @@
   "name": "bis-smart-grader",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://Bavly-Hamdy.github.io/BIS-Smart-Grader",
-"scripts": {
+  "homepage": "https://Bavly-Hamdy.github.io/BIS-Smart-Grader-V2",
+  "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
@@ -12,22 +12,22 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
-    "firebase": "^10.12.0",
-    "react-router-dom": "^6.22.3",
-    "lucide-react": "^0.368.0",
     "clsx": "^2.1.0",
-    "tailwind-merge": "^2.2.2",
+    "firebase": "^10.12.0",
+    "framer-motion": "^11.0.24",
+    "lucide-react": "^0.368.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "framer-motion": "^11.0.24",
-    "recharts": "^2.12.3"
+    "react-router-dom": "^6.22.3",
+    "recharts": "^2.12.3",
+    "tailwind-merge": "^2.2.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.0",
+    "gh-pages": "^6.3.0",
     "typescript": "^5.2.2",
-    "vite": "^5.0.0",
-    "gh-pages": "^6.1.1"
+    "vite": "^5.0.0"
   }
 }
