@@ -5,7 +5,7 @@ import path from 'path';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
-    base: '/BIS-Smart-Grader/', // THIS IS THE FIX
+    base: '/BIS-Smart-Grader/', // ✅ ده السطر اللي بيحل مشكلة GitHub Pages
     plugins: [react()],
     resolve: {
       alias: {
