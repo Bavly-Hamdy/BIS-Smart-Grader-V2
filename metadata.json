@@ -1,0 +1,5 @@
+{
+  "name": "BIS Smart Grader",
+  "description": "An AI-powered assessment platform for the BIS Faculty at Assiut University to automate grading of handwritten English exams using Google Gemini technology.",
+  "requestFramePermissions": []
+}

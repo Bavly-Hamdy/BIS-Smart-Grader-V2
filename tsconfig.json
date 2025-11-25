@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "module": "ESNext",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": true,
+    "types": [
+      "node",
+      "react",
+      "react-dom"
+    ],
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "react-router-dom": ["node_modules/react-router-dom"],
+      "lucide-react": ["node_modules/lucide-react"],
+      "framer-motion": ["node_modules/framer-motion"],
+      "firebase/firestore": ["node_modules/firebase/firestore"],
+      "firebase/auth": ["node_modules/firebase/auth"],
+      "clsx": ["node_modules/clsx"],
+      "tailwind-merge": ["node_modules/tailwind-merge"]
+    },
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  }
+}
