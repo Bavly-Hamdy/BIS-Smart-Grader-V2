@@ -5,7 +5,7 @@ import path from 'path';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
-    base: '/BIS-Smart-Grader-V2/', // ✅ ده السطر اللي بيحل مشكلة GitHub Pages
+    base: 'http://localhost:3000/', // ✅ ده السطر اللي بيحل مشكلة GitHub Pages
     plugins: [react()],
     resolve: {
       alias: {
