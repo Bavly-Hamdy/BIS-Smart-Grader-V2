@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="https://postimg.cc/sB38C4PD" alt="Project Banner" width="100%" />
+  <img src="[https://postimg.cc/sB38C4PD](https://i.postimg.cc/43cTt8mt/Gemini-Generated-Image-l1stwpl1stwpl1st.jpg)" alt="Project Banner" width="100%" />
 
   <br />
   <br />
