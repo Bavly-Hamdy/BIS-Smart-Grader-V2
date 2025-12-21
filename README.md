@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="https://via.placeholder.com/1200x400/2563eb/ffffff?text=BIS+Smart+Grader+Dashboard" alt="Project Banner" width="100%" />
+  <img src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" alt="Project Banner" width="100%" />
 
   <br />
   <br />
