@@ -1,0 +1,397 @@
+import React, { useEffect, useState } from 'react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
+import { BookOpen, Users, FileCheck, Clock, TrendingUp, AlertTriangle, Calendar, GraduationCap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import CourseCard from './CourseCard';
+import { db, auth } from '../../firebase/firebaseConfig';
+import { collection, query, where, onSnapshot, getDocs, doc, getDoc } from 'firebase/firestore';
+import { Course, Exam, FacultyProfile } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
+import { motion } from 'framer-motion';
+
+const DashboardHome: React.FC = () => {
+  const navigate = useNavigate();
+  const { t } = useLanguage();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [grades, setGrades] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState<string>('');
+
+  // Derived Real Stats
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [averageScore, setAverageScore] = useState(0);
+  const [gradeDistribution, setGradeDistribution] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
+
+    // Set initial name from auth, but fetch real profile to be sure
+    setUserName(auth.currentUser.displayName || '');
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // 0. Fetch User Profile for Name from 'faculty' collection
+        try {
+          const userDocRef = doc(db, 'faculty', uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data() as FacultyProfile;
+            // Prefer fullName from Firestore profile
+            setUserName(userData.fullName || auth.currentUser?.displayName || 'Doctor');
+          }
+        } catch (err) {
+          console.error("Error fetching user profile:", err);
+        }
+
+        // 1. Fetch Courses
+        const coursesQuery = query(collection(db, 'courses'), where('facultyId', '==', uid));
+        const coursesUnsub = onSnapshot(coursesQuery, (snapshot) => {
+          const courseData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[];
+          courseData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          setCourses(courseData);
+        });
+
+        // 2. Fetch Exams (to see active exams)
+        const examsQuery = query(collection(db, 'exams'), where('facultyId', '==', uid));
+        const examsUnsub = onSnapshot(examsQuery, async (snapshot) => {
+          const examData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Exam[];
+          setExams(examData);
+
+          if (examData.length > 0) {
+            const examIds = examData.map(e => e.id);
+            const chunks = [];
+            for (let i = 0; i < examIds.length; i += 10) {
+              chunks.push(examIds.slice(i, i + 10));
+            }
+
+            const allGrades: any[] = [];
+            for (const chunk of chunks) {
+              const q = query(collection(db, 'grades'), where('examId', 'in', chunk));
+              const snap = await getDocs(q);
+              allGrades.push(...snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            }
+            processGrades(allGrades);
+          } else {
+            setGrades([]);
+            processGrades([]);
+          }
+        });
+
+        const processGrades = (gradeData: any[]) => {
+          setGrades(gradeData);
+          const uniqueStudents = new Set(gradeData.map(g => g.studentId));
+          setTotalStudents(uniqueStudents.size);
+
+          if (gradeData.length > 0) {
+            const total = gradeData.reduce((acc, curr) => acc + (curr.totalScore || curr.score || 0), 0);
+            const avg = total / gradeData.length;
+            setAverageScore(Math.round(avg * 10) / 10);
+
+            const dist = [0, 0, 0, 0, 0];
+            gradeData.forEach(g => {
+              const s = g.percentage || 0;
+              if (s >= 85) dist[4]++;
+              else if (s >= 75) dist[3]++;
+              else if (s >= 65) dist[2]++;
+              else if (s >= 50) dist[1]++;
+              else dist[0]++;
+            });
+            setGradeDistribution([
+              { name: 'F', count: dist[0] },
+              { name: 'D', count: dist[1] },
+              { name: 'C', count: dist[2] },
+              { name: 'B', count: dist[3] },
+              { name: 'A', count: dist[4] },
+            ]);
+
+          } else {
+            setAverageScore(0);
+            setGradeDistribution([]);
+          }
+        };
+
+        return () => {
+          coursesUnsub();
+          examsUnsub();
+        };
+
+      } catch (error) {
+        console.error("Error asking dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [auth.currentUser]);
+
+  const activeExams = exams.length;
+  const recentGradesCount = grades.length; // Simplified for demo
+
+  // Premium Stat Card Component
+  const StatCard = ({ label, value, icon: Icon, color, delay }: any) => {
+    const colorStyles = {
+      blue: { bg: 'bg-blue-50 dark:bg-blue-900/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-100 dark:border-blue-800' },
+      emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/10', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-100 dark:border-emerald-800' },
+      purple: { bg: 'bg-purple-50 dark:bg-purple-900/10', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-100 dark:border-purple-800' },
+      indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/10', text: 'text-indigo-600 dark:text-indigo-400', border: 'border-indigo-100 dark:border-indigo-800' },
+      teal: { bg: 'bg-teal-50 dark:bg-teal-900/10', text: 'text-teal-600 dark:text-teal-400', border: 'border-teal-100 dark:border-teal-800' },
+      rose: { bg: 'bg-rose-50 dark:bg-rose-900/10', text: 'text-rose-600 dark:text-rose-400', border: 'border-rose-100 dark:border-rose-800' },
+    };
+
+    const style = colorStyles[color as keyof typeof colorStyles] || colorStyles.blue;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: delay * 0.1 }}
+        className={`bg-white dark:bg-slate-900 p-6 rounded-2xl border ${style.border} shadow-sm relative overflow-hidden group hover:shadow-md transition-all`}
+      >
+        <div className={`absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity`}>
+          <Icon className={`h-24 w-24 ${style.text}`} />
+        </div>
+
+        <div className="relative">
+          <div className={`w-10 h-10 rounded-lg ${style.bg} flex items-center justify-center mb-3`}>
+            <Icon className={`h-5 w-5 ${style.text}`} />
+          </div>
+          <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-1">{value}</h3>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
+        </div>
+      </motion.div>
+    );
+  };
+
+  const passCount = grades.filter(g => (g.percentage || g.score || 0) >= 50).length;
+  const failCount = grades.length - passCount;
+  const pieData = [
+    { name: 'Pass', value: passCount },
+    { name: 'Fail', value: failCount },
+  ];
+  const COLORS = ['#10b981', '#f43f5e'];
+
+  return (
+    <div className="space-y-8 pb-12 max-w-7xl mx-auto">
+      {/* Premium Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-fuchsia-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
+
+        <div className="relative p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider rounded-full">
+                Academic Year 2025-2026
+              </span>
+            </div>
+            <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight mb-2">
+              Dashboard
+            </h1>
+            <p className="text-lg text-slate-600 dark:text-slate-400">
+              Welcome back, <span className="font-semibold text-slate-900 dark:text-white">{userName}</span>
+            </p>
+          </div>
+
+          <div className="hidden md:block text-right">
+            <div className="text-sm font-medium text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-xl border border-slate-100 dark:border-slate-700">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
+        <StatCard label={t('active_courses') || 'Courses'} value={courses.length} icon={BookOpen} color="blue" delay={1} />
+        <StatCard label={t('total_students') || 'Students'} value={totalStudents} icon={Users} color="teal" delay={2} />
+        <StatCard label={t('active_exams') || 'Exams'} value={activeExams} icon={Calendar} color="purple" delay={3} />
+        <StatCard label={t('new_grades') || 'Grades'} value={recentGradesCount} icon={FileCheck} color="indigo" delay={4} />
+        <StatCard label={t('avg_score') || 'Avg Score'} value={`${averageScore}%`} icon={TrendingUp} color="emerald" delay={5} />
+        <StatCard label={t('at_risk') || 'At Risk'} value={failCount} icon={AlertTriangle} color="rose" delay={6} />
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Grade Distribution */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-indigo-500" />
+                Grade Distribution
+              </h3>
+              <p className="text-sm text-slate-500">Overall performance curve</p>
+            </div>
+          </div>
+          <div className="h-72 w-full">
+            {grades.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={gradeDistribution}>
+                  <defs>
+                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                  <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    itemStyle={{ color: '#1e293b' }}
+                    labelStyle={{ color: '#64748b', marginBottom: '0.5rem' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#6366f1"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorCount)"
+                    animationDuration={1500}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                <GraduationCap className="h-10 w-10 mb-2 opacity-50" />
+                <span>No grade data available yet</span>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Pass/Fail */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Users className="h-5 w-5 text-emerald-500" />
+                Success Rate
+              </h3>
+              <p className="text-sm text-slate-500">Pass vs Fail Ratio</p>
+            </div>
+          </div>
+          <div className="h-72 flex items-center justify-center relative">
+            {grades.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={80}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                      cornerRadius={6}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                    {((passCount / grades.length) * 100).toFixed(0)}%
+                  </span>
+                  <span className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Pass Rate</span>
+                </div>
+              </>
+            ) : (
+              <div className="h-full w-full flex flex-col items-center justify-center text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                <AlertTriangle className="h-10 w-10 mb-2 opacity-50" />
+                <span>No data available yet</span>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Courses Grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="pt-4"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('active_courses') || 'Active Courses'}</h2>
+          </div>
+          <button
+            onClick={() => navigate('/faculty-dashboard/courses')}
+            className="text-sm font-semibold text-primary hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors flex items-center gap-1 group"
+          >
+            {t('view_all') || 'View All'}
+            <span className="transform group-hover:translate-x-1 transition-transform">→</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {loading ? (
+            [1, 2, 3, 4].map(i => (
+              <div key={i} className="h-[200px] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 animate-pulse p-6" />
+            ))
+          ) : courses.length === 0 ? (
+            <div className="col-span-full py-16 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+              <BookOpen className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">No active courses yet</h3>
+              <p className="text-slate-500 mb-6">Start by creating your first course to manage exams and grades.</p>
+              <button
+                onClick={() => navigate('/faculty-dashboard/courses')}
+                className="px-6 py-2.5 bg-primary text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all"
+              >
+                Create Course
+              </button>
+            </div>
+          ) : (
+            courses.slice(0, 4).map(course => (
+              <CourseCard
+                key={course.id}
+                title={course.name}
+                code={course.code}
+                studentCount={grades.filter(g => g.courseId === course.id).length || 0}
+                onClick={() => navigate(`/faculty-dashboard/courses/${course.id}`)}
+              />
+            ))
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+export default DashboardHome;
