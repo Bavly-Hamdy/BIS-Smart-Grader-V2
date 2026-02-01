@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "private": true,
+  "homepage": "https://Bavly-Hamdy.github.io/BIS-Smart-Grader-V2",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
