@@ -21,6 +21,7 @@ import Button from '../Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import CourseCard from './CourseCard';
 import { useToast } from '../../context/ToastContext';
+import { doc, deleteDoc } from 'firebase/firestore';
 
 const CourseManagement: React.FC = () => {
     const navigate = useNavigate();
@@ -30,6 +31,10 @@ const CourseManagement: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [step, setStep] = useState(1);
+    
+    // Real Student Counts
+    const [courseStudentCounts, setCourseStudentCounts] = useState<Record<string, number>>({});
+    const [totalUniqueStudents, setTotalUniqueStudents] = useState(0);
 
     // New Course Form State
     const [newCourse, setNewCourse] = useState({
@@ -66,6 +71,32 @@ const CourseManagement: React.FC = () => {
                 ...doc.data()
             })) as Course[];
             setCourses(coursesData);
+
+            // Fetch real student numbers
+            const gradesSnap = await getDocs(collection(db, 'grades'));
+            const allGrades = gradesSnap.docs.map(doc => doc.data() as any);
+            
+            const courseStudentsMap: Record<string, Set<string>> = {};
+            const uniqueStudents = new Set<string>();
+
+            coursesData.forEach(c => {
+                courseStudentsMap[c.id] = new Set();
+            });
+
+            allGrades.forEach(grade => {
+                if (grade.courseId && courseStudentsMap[grade.courseId]) {
+                    courseStudentsMap[grade.courseId].add(grade.studentId);
+                    uniqueStudents.add(grade.studentId);
+                }
+            });
+
+            const counts: Record<string, number> = {};
+            for (const courseId in courseStudentsMap) {
+                counts[courseId] = courseStudentsMap[courseId].size;
+            }
+            
+            setCourseStudentCounts(counts);
+            setTotalUniqueStudents(uniqueStudents.size);
         } catch (error) {
             console.error("Error fetching courses:", error);
             addToast("Failed to load courses", "error");
@@ -215,7 +246,7 @@ const CourseManagement: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <StatCard label="Total Courses" value={totalCourses} icon={BookOpen} color="violet" delay={1} />
                 <StatCard label="Total Credits Taught" value={totalCredits} icon={Clock} color="indigo" delay={2} />
-                <StatCard label="Total Students" value={courses.length * 45} icon={Users} color="fuchsia" delay={3} /> {/* Mock logic for now */}
+                <StatCard label="Total Students" value={totalUniqueStudents} icon={Users} color="fuchsia" delay={3} />
             </div>
 
             {/* Search Bar */}
@@ -282,8 +313,22 @@ const CourseManagement: React.FC = () => {
                                     description={course.description}
                                     creditHours={course.creditHours}
                                     semester={course.semester}
-                                    studentCount={45} // Placeholder
+                                    studentCount={courseStudentCounts[course.id] || 0}
                                     onClick={() => navigate(`/faculty-dashboard/courses/${course.id}`)}
+                                    onDelete={async (e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (window.confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+                                            try {
+                                                await deleteDoc(doc(db, 'courses', course.id));
+                                                addToast('Course deleted successfully.', 'success');
+                                                fetchCourses();
+                                            } catch (error) {
+                                                console.error('Error deleting course:', error);
+                                                addToast('Failed to delete course.', 'error');
+                                            }
+                                        }
+                                    }}
                                 />
                             </motion.div>
                         ))}

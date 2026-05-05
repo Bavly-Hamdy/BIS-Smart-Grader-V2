@@ -10,6 +10,7 @@ export interface GradingRequest {
     studentAnswerImageUrl: string;
     modelAnswerText?: string;
     modelAnswerPdfUrl?: string;
+    modelAnswerImageUrl?: string;
     maxScore: number;
     gradingRubric?: string;
     examTitle: string;
@@ -32,8 +33,8 @@ export interface GradingResponse {
  */
 export async function gradeSubmission(request: GradingRequest): Promise<GradingResponse> {
     try {
-        if (!request.modelAnswerText && !request.modelAnswerPdfUrl) {
-            throw new Error('Either model answer text or PDF URL must be provided');
+        if (!request.modelAnswerText && !request.modelAnswerPdfUrl && !request.modelAnswerImageUrl) {
+            throw new Error('Either model answer text, PDF URL, or Image URL must be provided');
         }
 
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
@@ -64,6 +65,20 @@ export async function gradeSubmission(request: GradingRequest): Promise<GradingR
                 inlineData: {
                     data: pdfBase64.split(',')[1],
                     mimeType: 'application/pdf'
+                }
+            });
+        }
+        
+        // If Image model answer, fetch and add it
+        if (request.modelAnswerImageUrl) {
+            const imgResponse = await fetch(request.modelAnswerImageUrl);
+            const imgBlob = await imgResponse.blob();
+            const imgBase64 = await blobToBase64(imgBlob);
+
+            contentParts.push({
+                inlineData: {
+                    data: imgBase64.split(',')[1],
+                    mimeType: imgBlob.type
                 }
             });
         }
@@ -145,8 +160,8 @@ Respond ONLY with valid JSON, no additional text.`;
 function buildGradingPromptWithPdf(request: GradingRequest): string {
     const rubric = request.gradingRubric || 'Grade based on accuracy, completeness, and clarity.';
 
-    const modelAnswerSource = request.modelAnswerPdfUrl
-        ? `The attached PDF document contains the model answer.`
+    const modelAnswerSource = request.modelAnswerPdfUrl || request.modelAnswerImageUrl
+        ? `The attached document/image contains the model answer.`
         : `**Model Answer (Text):**\n${request.modelAnswerText}`;
 
     return `You are an expert academic grader for "${request.examTitle}".
@@ -159,7 +174,7 @@ Before grading, you MUST first identify the student from the top of the exam pap
 
 **Grading Task:**
 1. Carefully read the handwritten student answer in the FIRST image
-2. Compare it with the model answer ${request.modelAnswerPdfUrl ? 'in the PDF document' : 'provided below'}
+2. Compare it with the model answer ${request.modelAnswerPdfUrl || request.modelAnswerImageUrl ? 'in the attached document/image' : 'provided below'}
 3. Grade the answer based on the rubric
 4. Provide detailed analysis
 

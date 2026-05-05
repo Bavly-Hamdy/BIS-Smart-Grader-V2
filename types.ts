@@ -50,6 +50,8 @@ export interface Exam {
   modelAnswerText?: string; // Text-based model answer
   modelAnswerPdfUrl?: string; // PDF-based model answer URL
   modelAnswerPdfName?: string; // PDF filename
+  modelAnswerImageUrl?: string; // Image-based model answer URL
+  modelAnswerImageName?: string; // Image filename
   isLocked: boolean;
   submissionsCount?: number;
   gradedCount?: number;

@@ -12,11 +12,12 @@ import {
     AlertCircle,
     BarChart2,
     Save,
-    Loader2
+    Loader2,
+    Camera
 } from 'lucide-react';
 import { auth, db } from '../../firebase/firebaseConfig';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { uploadPdfToCloudinary } from '../../services/cloudinaryService';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, addDoc } from 'firebase/firestore';
+import { uploadPdfToCloudinary, uploadImageToCloudinary } from '../../services/cloudinaryService';
 import { motion } from 'framer-motion';
 import Button from '../Button';
 import BulkUploadModal from './BulkUploadModal';
@@ -32,11 +33,14 @@ const ExamDetail: React.FC = () => {
     const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
 
     // Model Answer State
-    const [modelAnswerMode, setModelAnswerMode] = useState<'text' | 'pdf'>('text');
+    const [modelAnswerMode, setModelAnswerMode] = useState<'text' | 'pdf' | 'image'>('text');
     const [modelAnswerText, setModelAnswerText] = useState('');
     const [modelAnswerPdfUrl, setModelAnswerPdfUrl] = useState('');
     const [modelAnswerPdfName, setModelAnswerPdfName] = useState('');
+    const [modelAnswerImageUrl, setModelAnswerImageUrl] = useState('');
+    const [modelAnswerImageName, setModelAnswerImageName] = useState('');
     const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [isSavingModelAnswer, setIsSavingModelAnswer] = useState(false);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -74,6 +78,13 @@ const ExamDetail: React.FC = () => {
                     setModelAnswerPdfName(data.modelAnswerPdfName || 'model-answer.pdf');
                     setModelAnswerMode('pdf');
                 }
+                // @ts-ignore
+                if (data.modelAnswerImageUrl) {
+                    setModelAnswerImageUrl(data.modelAnswerImageUrl);
+                    // @ts-ignore
+                    setModelAnswerImageName(data.modelAnswerImageName || 'model-answer.png');
+                    setModelAnswerMode('image');
+                }
             } else {
                 console.error('Exam not found');
                 navigate('/faculty-dashboard/exams');
@@ -102,6 +113,8 @@ const ExamDetail: React.FC = () => {
                 modelAnswerId: 'text-entry',
                 modelAnswerPdfUrl: '', // Clear PDF if switching to text
                 modelAnswerPdfName: '',
+                modelAnswerImageUrl: '', // Clear image
+                modelAnswerImageName: '',
                 updatedAt: new Date().toISOString()
             });
             setIsSavingModelAnswer(false);
@@ -129,6 +142,8 @@ const ExamDetail: React.FC = () => {
                 modelAnswerPdfName: file.name,
                 modelAnswerId: 'pdf-upload',
                 modelAnswerText: '',
+                modelAnswerImageUrl: '',
+                modelAnswerImageName: '',
                 updatedAt: new Date().toISOString()
             });
 
@@ -140,6 +155,40 @@ const ExamDetail: React.FC = () => {
             console.error('Error uploading PDF:', error);
             setIsUploadingPdf(false);
             alert('Failed to upload PDF. Please try again.');
+        }
+    };
+
+    const handleImageUpload = async (file: File) => {
+        if (!examId || !file) return;
+
+        try {
+            setUploadProgress(0);
+            setIsUploadingImage(true);
+
+            const folder = `model-answers/${examId}`;
+
+            const result = await uploadImageToCloudinary(file, folder, (progress) => {
+                setUploadProgress(progress);
+            });
+
+            await updateDoc(doc(db, 'exams', examId), {
+                modelAnswerImageUrl: result.secure_url,
+                modelAnswerImageName: file.name,
+                modelAnswerId: 'image-upload',
+                modelAnswerText: '',
+                modelAnswerPdfUrl: '',
+                modelAnswerPdfName: '',
+                updatedAt: new Date().toISOString()
+            });
+
+            setModelAnswerImageUrl(result.secure_url);
+            setModelAnswerImageName(file.name);
+            setIsUploadingImage(false);
+            setUploadProgress(0);
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            setIsUploadingImage(false);
+            alert('Failed to upload Image. Please try again.');
         }
     };
 
@@ -161,9 +210,27 @@ const ExamDetail: React.FC = () => {
         }
     };
 
+    const handleDeleteImage = async () => {
+        if (!examId || !modelAnswerImageUrl) return;
+
+        try {
+            await updateDoc(doc(db, 'exams', examId), {
+                modelAnswerImageUrl: '',
+                modelAnswerImageName: '',
+                modelAnswerId: '',
+                updatedAt: new Date().toISOString()
+            });
+
+            setModelAnswerImageUrl('');
+            setModelAnswerImageName('');
+        } catch (error) {
+            console.error('Error deleting Image:', error);
+        }
+    };
+
     const handleStartGrading = async () => {
         if (!exam || submissions.length === 0) return;
-        if (!modelAnswerText && !modelAnswerPdfUrl) return;
+        if (!modelAnswerText && !modelAnswerPdfUrl && !modelAnswerImageUrl) return;
 
         setIsGrading(true);
         setGradingError(null);
@@ -184,6 +251,7 @@ const ExamDetail: React.FC = () => {
                 studentAnswerImageUrl: sub.imageUrl,
                 modelAnswerText: modelAnswerText || undefined,
                 modelAnswerPdfUrl: modelAnswerPdfUrl || undefined,
+                modelAnswerImageUrl: modelAnswerImageUrl || undefined,
                 maxScore: exam.totalMarks,
                 examTitle: exam.title,
                 gradingRubric: "Grade strictly based on the model answer provided."
@@ -236,7 +304,7 @@ const ExamDetail: React.FC = () => {
                     };
 
                     // Save Grade
-                    await addDoc(collection(db, 'grades'), gradeRecord);
+                    await addDocFirestore(collection(db, 'grades'), gradeRecord);
 
                     // Update Submission Status
                     await updateDoc(doc(db, 'submissions', sub.id), {
@@ -279,9 +347,8 @@ const ExamDetail: React.FC = () => {
     };
 
     // Helper for Firestore
-    const addDoc = async (coll: any, data: any) => {
-        const { addDoc: firestoreAddDoc } = await import('firebase/firestore');
-        return firestoreAddDoc(coll, data);
+    const addDocFirestore = async (coll: any, data: any) => {
+        return addDoc(coll, data);
     };
 
     if (loading) {
@@ -294,8 +361,8 @@ const ExamDetail: React.FC = () => {
 
     if (!exam) return null;
 
-    const isReadyToGrade = (modelAnswerText.length > 0 || modelAnswerPdfUrl.length > 0) && submissions.length > 0;
-    const hasModelAnswer = modelAnswerText.length > 0 || modelAnswerPdfUrl.length > 0;
+    const isReadyToGrade = (modelAnswerText.length > 0 || modelAnswerPdfUrl.length > 0 || modelAnswerImageUrl.length > 0) && submissions.length > 0;
+    const hasModelAnswer = modelAnswerText.length > 0 || modelAnswerPdfUrl.length > 0 || modelAnswerImageUrl.length > 0;
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
@@ -361,6 +428,15 @@ const ExamDetail: React.FC = () => {
                             >
                                 PDF
                             </button>
+                            <button
+                                onClick={() => setModelAnswerMode('image')}
+                                className={`px-3 py-1.5 text-sm font-medium rounded transition-all ${modelAnswerMode === 'image'
+                                    ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                                    }`}
+                            >
+                                Image
+                            </button>
                         </div>
                     </div>
 
@@ -390,7 +466,7 @@ const ExamDetail: React.FC = () => {
                                 </Button>
                             </div>
                         </>
-                    ) : (
+                    ) : modelAnswerMode === 'pdf' ? (
                         <>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                                 Upload a PDF file containing the model answer. AI will compare student handwritten answers with this PDF.
@@ -450,6 +526,74 @@ const ExamDetail: React.FC = () => {
                                                 <Button type="button" onClick={() => document.getElementById('pdf-upload-input')?.click()}>
                                                     <FileText className="h-4 w-4 mr-2" />
                                                     Choose PDF File
+                                                </Button>
+                                            </label>
+                                            <p className="text-xs text-slate-400 mt-3">Max file size: 10MB</p>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                                Upload an image containing the model answer. AI will compare student handwritten answers with this image.
+                            </p>
+
+                            {modelAnswerImageUrl ? (
+                                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-green-300 dark:border-green-700 rounded-lg">
+                                    <img src={modelAnswerImageUrl} alt="Model Answer" className="h-24 w-auto object-contain mb-4 rounded-md shadow-sm" />
+                                    <p className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{modelAnswerImageName}</p>
+                                    <p className="text-sm text-slate-500 mb-4">Image uploaded successfully</p>
+                                    <div className="flex gap-3">
+                                        <a
+                                            href={modelAnswerImageUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                                        >
+                                            View Image
+                                        </a>
+                                        <button
+                                            onClick={handleDeleteImage}
+                                            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg">
+                                    {isUploadingImage ? (
+                                        <div className="w-full max-w-md">
+                                            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+                                            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5">
+                                                <div
+                                                    className="bg-primary h-full rounded-full transition-all duration-300"
+                                                    style={{ width: `${uploadProgress}%` }}
+                                                ></div>
+                                            </div>
+                                            <p className="text-sm text-slate-500 text-center mt-2">{Math.round(uploadProgress)}% uploaded</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <Upload className="h-12 w-12 text-slate-400 mb-4" />
+                                            <p className="text-lg font-medium text-slate-900 dark:text-white mb-2">Upload Model Answer Image</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Click to browse or drag and drop</p>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) handleImageUpload(file);
+                                                }}
+                                                className="hidden"
+                                                id="image-upload-input"
+                                            />
+                                            <label htmlFor="image-upload-input">
+                                                <Button type="button" onClick={() => document.getElementById('image-upload-input')?.click()}>
+                                                    <Camera className="h-4 w-4 mr-2" />
+                                                    Choose Image File
                                                 </Button>
                                             </label>
                                             <p className="text-xs text-slate-400 mt-3">Max file size: 10MB</p>

@@ -96,7 +96,7 @@ const DashboardLayout: React.FC = () => {
               <LayoutDashboard className="h-6 w-6 text-white" />
             </div>
             <div>
-              <span className="font-bold text-xl text-slate-900 dark:text-white tracking-tight block">Smart Grader</span>
+              <span className="font-bold text-xl text-slate-900 dark:text-white tracking-tight block">E-WRITTEN</span>
               <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Faculty Space</span>
             </div>
           </div>
@@ -377,7 +377,7 @@ const DashboardLayout: React.FC = () => {
                 className="fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-900 z-50 md:hidden flex flex-col"
               >
                 <div className="p-6 flex justify-between items-center border-b border-slate-200 dark:border-slate-800">
-                  <span className="font-bold text-lg text-slate-900 dark:text-white">Smart Grader</span>
+                  <span className="font-bold text-lg text-slate-900 dark:text-white">E-WRITTEN</span>
                   <button onClick={() => setSidebarOpen(false)}>
                     <X className="h-6 w-6 text-slate-500" />
                   </button>

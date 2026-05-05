@@ -89,7 +89,7 @@ const LandingPage: React.FC = () => {
             {...fadeInUp}
             className="text-center mb-16"
           >
-            <h2 className="text-primary dark:text-blue-400 font-semibold text-sm uppercase tracking-wide mb-2">Why Choose Smart Grader?</h2>
+            <h2 className="text-primary dark:text-blue-400 font-semibold text-sm uppercase tracking-wide mb-2">Why Choose E-WRITTEN?</h2>
             <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Advanced features for modern faculty</h3>
           </motion.div>
 

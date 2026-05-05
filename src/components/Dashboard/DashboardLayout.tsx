@@ -15,7 +15,7 @@ import {
   User,
   ChevronDown
 } from 'lucide-react';
-import { auth, db } from '../../firebase/firebaseConfig';
+import { auth, db } from '../../../firebase/firebaseConfig';
 // @ts-ignore - fix for exported member error
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -87,7 +87,7 @@ const DashboardLayout: React.FC = () => {
           <div className="bg-primary/10 dark:bg-blue-900/20 p-2 rounded-lg">
             <LayoutDashboard className="h-6 w-6 text-primary dark:text-blue-400" />
           </div>
-          <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">Smart Grader</span>
+          <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">E-WRITTEN</span>
         </div>
 
         <nav className="flex-1 px-4 py-4 space-y-1">
@@ -239,7 +239,7 @@ const DashboardLayout: React.FC = () => {
                 className="fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-900 z-50 md:hidden flex flex-col"
               >
                 <div className="p-6 flex justify-between items-center border-b border-slate-200 dark:border-slate-800">
-                  <span className="font-bold text-lg text-slate-900 dark:text-white">Smart Grader</span>
+                  <span className="font-bold text-lg text-slate-900 dark:text-white">E-WRITTEN</span>
                   <button onClick={() => setSidebarOpen(false)}>
                     <X className="h-6 w-6 text-slate-500" />
                   </button>

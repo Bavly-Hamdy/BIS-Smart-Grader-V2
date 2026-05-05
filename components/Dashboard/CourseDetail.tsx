@@ -263,11 +263,12 @@ const CourseDetail: React.FC = () => {
                                         min="0"
                                         max="100"
                                         disabled={!isEditing}
-                                        value={gradingScheme[item.key as keyof CourseGradingScheme]}
+                                        value={gradingScheme[item.key as keyof CourseGradingScheme] === 0 ? '' : gradingScheme[item.key as keyof CourseGradingScheme]}
                                         onChange={(e) => setGradingScheme(prev => ({
                                             ...prev,
-                                            [item.key]: Number(e.target.value)
+                                            [item.key]: e.target.value === '' ? 0 : Number(e.target.value)
                                         }))}
+                                        onFocus={(e) => e.target.select()}
                                         className={`w-full px-4 py-3 border rounded-xl transition-all font-medium text-lg ${isEditing
                                             ? 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm'
                                             : 'border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 cursor-not-allowed'

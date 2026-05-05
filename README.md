@@ -5,7 +5,7 @@
   <br />
   <br />
 
-  <h1 align="center" style="font-size: 3rem; font-weight: 900; color: #1e293b;">🎓 BIS Smart Grader</h1>
+  <h1 align="center" style="font-size: 3rem; font-weight: 900; color: #1e293b;">🎓 E-WRITTEN</h1>
   
   <h3 align="center" style="color: #64748b; font-weight: 500;">
     The Intelligent Academic Assessment & Faculty Management System
@@ -85,7 +85,7 @@ In the modern academic landscape, university faculties face significant challeng
 *   **Lack of Insight**: Difficulty in tracking real-time student performance trends across semesters.
 
 ### The Solution
-**BIS Smart Grader** is a cutting-edge web application engineered to digitize and automate the entire academic assessment workflow. It serves as a centralized hub where:
+**E-WRITTEN** is a cutting-edge web application engineered to digitize and automate the entire academic assessment workflow. It serves as a centralized hub where:
 1.  **Faculty members** can manage courses, exams, and students seamlessly.
 2.  **Grading workflows** are automated and error-checked.
 3.  **Data insights** are instant, providing clear visualizations of academic performance.
@@ -162,6 +162,7 @@ A clean, modular architecture ensures maintainability.
 
 ```bash
 bis-smart-grader/
+e-written/
 ├── src/
 │   ├── components/
 │   │   ├── Auth/           # Authentication forms and logic
@@ -193,8 +194,8 @@ Ensure you have the following installed:
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/bavlyhamdy/bis-smart-grader.git
-cd bis-smart-grader
+git clone https://github.com/bavlyhamdy/e-written.git
+cd e-written
 ```
 
 ### Step 2: Install Dependencies
