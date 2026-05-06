@@ -15,10 +15,11 @@ import {
     BarChart3,
     ArrowUpRight,
     ArrowDownRight,
-    LayoutDashboard
+    LayoutDashboard,
+    Trash2
 } from 'lucide-react';
 import { db } from '../../firebase/firebaseConfig';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { Grade, GradeSheet } from '../../types';
 import { calculateLetterGrade, prepareGradeSheet, exportToExcel, exportToPDF } from '../../services/exportService';
 import Button from '../Button';
@@ -128,6 +129,20 @@ const GradeSheetPage: React.FC = () => {
     const handleExportPDF = () => {
         if (gradeSheet) {
             exportToPDF(gradeSheet);
+        }
+    };
+
+    const handleDeleteGrade = async (grade: Grade) => {
+        if (!window.confirm(`Are you sure you want to completely delete the record and submission for ${grade.studentName}?`)) return;
+        try {
+            await deleteDoc(doc(db, 'grades', grade.id));
+            if (grade.submissionId) {
+                await deleteDoc(doc(db, 'submissions', grade.submissionId));
+            }
+            fetchGrades(); // Refresh the list
+        } catch (error) {
+            console.error('Error deleting grade:', error);
+            alert('Failed to delete grade record.');
         }
     };
 
@@ -336,6 +351,7 @@ const GradeSheetPage: React.FC = () => {
                                         grade={grade}
                                         index={index}
                                         onView={() => handleViewGrade(grade)}
+                                        onDelete={() => handleDeleteGrade(grade)}
                                     />
                                 ))
                             ) : (
@@ -363,6 +379,7 @@ const GradeSheetPage: React.FC = () => {
                     grade={selectedGrade}
                     modelAnswerText={examModelAnswer.text}
                     modelAnswerPdfUrl={examModelAnswer.pdfUrl}
+                    onGradeUpdated={fetchGrades}
                 />
             )}
         </div>
@@ -412,7 +429,7 @@ const StatCard = ({ label, value, icon: Icon, trendLabel, trendPositive, color }
 };
 
 // Premium Grade Row
-const GradeRow: React.FC<{ grade: Grade; index: number; onView: () => void }> = ({ grade, index, onView }) => {
+const GradeRow: React.FC<{ grade: Grade; index: number; onView: () => void; onDelete: () => void }> = ({ grade, index, onView, onDelete }) => {
     const isPassing = grade.percentage >= 60;
 
     // Generate initials
@@ -473,13 +490,20 @@ const GradeRow: React.FC<{ grade: Grade; index: number; onView: () => void }> = 
                     {grade.status}
                 </span>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-right">
+            <td className="px-6 py-4 whitespace-nowrap text-right flex items-center justify-end gap-2">
                 <button
                     onClick={onView}
                     className="p-2.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:bg-indigo-900/40 rounded-xl transition-all shadow-sm hover:shadow"
                     title="View Detailed Analysis"
                 >
                     <Eye className="h-5 w-5" />
+                </button>
+                <button
+                    onClick={onDelete}
+                    className="p-2.5 text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-xl transition-all shadow-sm hover:shadow"
+                    title="Delete Record"
+                >
+                    <Trash2 className="h-5 w-5" />
                 </button>
             </td>
         </motion.tr>

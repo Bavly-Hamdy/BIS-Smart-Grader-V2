@@ -16,7 +16,8 @@ import {
     Camera
 } from 'lucide-react';
 import { auth, db } from '../../firebase/firebaseConfig';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, addDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, orderBy, addDoc, deleteDoc } from 'firebase/firestore';
+import { Trash2 } from 'lucide-react';
 import { uploadPdfToCloudinary, uploadImageToCloudinary } from '../../services/cloudinaryService';
 import { motion } from 'framer-motion';
 import Button from '../Button';
@@ -346,6 +347,17 @@ const ExamDetail: React.FC = () => {
         return 'F';
     };
 
+    const handleDeleteSubmission = async (subId: string) => {
+        if (!window.confirm('Are you sure you want to delete this submission?')) return;
+        try {
+            await deleteDoc(doc(db, 'submissions', subId));
+            setSubmissions(prev => prev.filter(s => s.id !== subId));
+        } catch (error) {
+            console.error('Error deleting submission:', error);
+            alert('Failed to delete submission');
+        }
+    };
+
     // Helper for Firestore
     const addDocFirestore = async (coll: any, data: any) => {
         return addDoc(coll, data);
@@ -640,10 +652,19 @@ const ExamDetail: React.FC = () => {
                                             <FileText className="h-4 w-4 text-slate-400" />
                                             <span className="font-medium">{sub.studentName} ({sub.studentId})</span>
                                         </div>
-                                        <span className={`text-xs px-2 py-0.5 rounded ${sub.status === 'graded' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                                            }`}>
-                                            {sub.status}
-                                        </span>
+                                        <div className="flex items-center gap-3">
+                                            <span className={`text-xs px-2 py-0.5 rounded ${sub.status === 'graded' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                                                }`}>
+                                                {sub.status}
+                                            </span>
+                                            <button 
+                                                onClick={() => handleDeleteSubmission(sub.id)}
+                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                                                title="Delete Submission"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -690,7 +711,7 @@ const ExamDetail: React.FC = () => {
                                     }`}
                             >
                                 {submissions.length === 0 ? 'Upload Submissions First' :
-                                    modelAnswerText.length === 0 ? 'Enter Model Answer First' :
+                                    !hasModelAnswer ? 'Enter Model Answer First' :
                                         'Start Grading Now'}
                             </button>
                         )}

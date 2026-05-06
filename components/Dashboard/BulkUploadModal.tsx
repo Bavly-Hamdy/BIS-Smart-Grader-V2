@@ -5,6 +5,7 @@ import { auth } from '../../firebase/firebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import { uploadImageToCloudinary } from '../../services/cloudinaryService';
+import { extractStudentInfo } from '../../services/geminiGradingService';
 import Button from '../Button';
 
 interface BulkUploadModalProps {
@@ -24,6 +25,7 @@ interface UploadFile {
     error?: string;
     studentId?: string;
     studentName?: string;
+    isExtracting?: boolean;
 }
 
 const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
@@ -76,10 +78,32 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
             file,
             preview: URL.createObjectURL(file),
             status: 'pending',
-            progress: 0
+            progress: 0,
+            isExtracting: true
         }));
 
         setFiles(prev => [...prev, ...uploadFiles]);
+
+        // Kick off extraction for all new files
+        uploadFiles.forEach(async (uFile) => {
+            try {
+                const info = await extractStudentInfo(uFile.file);
+                setFiles(prev => prev.map(f => {
+                    if (f.id === uFile.id) {
+                        return {
+                            ...f,
+                            isExtracting: false,
+                            studentId: info.studentId || '',
+                            studentName: info.studentName || ''
+                        };
+                    }
+                    return f;
+                }));
+            } catch (error) {
+                console.error('Extraction failed for', uFile.file.name, error);
+                setFiles(prev => prev.map(f => f.id === uFile.id ? { ...f, isExtracting: false } : f));
+            }
+        });
     };
 
     const removeFile = (id: string) => {
@@ -367,16 +391,31 @@ const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, di
                     {/* Student Assignment */}
                     {file.status === 'pending' && (
                         <div className="mt-2">
-                            <input
-                                type="text"
-                                placeholder="Enter Student ID"
-                                onChange={(e) => {
-                                    const id = e.target.value;
-                                    onStudentAssign(id, `Student ${id}`);
-                                }}
-                                disabled={disabled}
-                                className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded focus:ring-2 focus:ring-primary/20 outline-none"
-                            />
+                            {file.isExtracting ? (
+                                <div className="flex items-center gap-2 text-sm text-primary">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span>AI is detecting Student Info...</span>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Enter Student ID"
+                                        value={file.studentId || ''}
+                                        onChange={(e) => {
+                                            const id = e.target.value;
+                                            onStudentAssign(id, file.studentName || `Student ${id}`);
+                                        }}
+                                        disabled={disabled}
+                                        className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded focus:ring-2 focus:ring-primary/20 outline-none"
+                                    />
+                                    {file.studentName && (
+                                        <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+                                            Identified as: {file.studentName}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
 

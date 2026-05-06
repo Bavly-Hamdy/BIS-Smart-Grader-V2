@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, XCircle, FileText, AlertCircle, Percent, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { X, CheckCircle, XCircle, FileText, AlertCircle, Percent, ExternalLink, Image as ImageIcon, Edit2, Save } from 'lucide-react';
 import { Grade, StudentSubmission } from '../../types';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import Button from '../Button';
 
@@ -13,13 +13,17 @@ interface GradeDetailModalProps {
     grade: Grade;
     modelAnswerText?: string;
     modelAnswerPdfUrl?: string; // Optional: To show model answer for comparison
+    onGradeUpdated?: () => void;
 }
 
-const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, grade, modelAnswerText, modelAnswerPdfUrl }) => {
+const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, grade, modelAnswerText, modelAnswerPdfUrl, onGradeUpdated }) => {
     const [activeTab, setActiveTab] = useState<'analysis' | 'paper'>('analysis');
     const [submission, setSubmission] = useState<StudentSubmission | null>(null);
     const [loadingSubmission, setLoadingSubmission] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [isEditingScore, setIsEditingScore] = useState(false);
+    const [editedScore, setEditedScore] = useState(grade.score);
+    const [isSavingScore, setIsSavingScore] = useState(false);
 
     useEffect(() => {
         if (isOpen && grade.submissionId) {
@@ -44,6 +48,43 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
             console.error("Error fetching submission:", error);
         } finally {
             setLoadingSubmission(false);
+        }
+    };
+
+    const calculateLetterGrade = (percentage: number) => {
+        if (percentage >= 90) return 'A';
+        if (percentage >= 80) return 'B';
+        if (percentage >= 70) return 'C';
+        if (percentage >= 60) return 'D';
+        return 'F';
+    };
+
+    const handleSaveScore = async () => {
+        if (!grade.id) return;
+        try {
+            setIsSavingScore(true);
+            const percentage = (editedScore / grade.maxScore) * 100;
+            const letter = calculateLetterGrade(percentage);
+
+            await updateDoc(doc(db, 'grades', grade.id), {
+                score: editedScore,
+                percentage: percentage,
+                letterGrade: letter
+            });
+
+            if (grade.submissionId) {
+                await updateDoc(doc(db, 'submissions', grade.submissionId), {
+                    finalGrade: editedScore
+                });
+            }
+
+            setIsEditingScore(false);
+            if (onGradeUpdated) onGradeUpdated();
+        } catch (error) {
+            console.error('Error updating score:', error);
+            alert('Failed to update score.');
+        } finally {
+            setIsSavingScore(false);
         }
     };
 
@@ -84,11 +125,45 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                         </div>
                         <div className="flex items-center gap-4">
                             <div className="text-right">
-                                <div className={`text-2xl font-bold ${isPassing ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                    {grade.score} <span className="text-sm text-slate-400 font-normal">/ {grade.maxScore}</span>
-                                </div>
+                                {isEditingScore ? (
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={grade.maxScore}
+                                            value={editedScore}
+                                            onChange={(e) => setEditedScore(Number(e.target.value))}
+                                            className="w-20 px-2 py-1 text-lg font-bold border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                                        />
+                                        <span className="text-sm text-slate-400 font-normal mt-1">/ {grade.maxScore}</span>
+                                        <button 
+                                            onClick={handleSaveScore} 
+                                            disabled={isSavingScore}
+                                            className="p-1.5 ml-1 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg transition-colors"
+                                        >
+                                            <Save className="h-4 w-4" />
+                                        </button>
+                                        <button 
+                                            onClick={() => { setIsEditingScore(false); setEditedScore(grade.score); }}
+                                            className="p-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className={`text-2xl font-bold flex items-center justify-end gap-2 ${isPassing ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                        {grade.score} <span className="text-sm text-slate-400 font-normal">/ {grade.maxScore}</span>
+                                        <button 
+                                            onClick={() => setIsEditingScore(true)}
+                                            className="text-slate-400 hover:text-primary transition-colors p-1"
+                                            title="Edit AI Grade"
+                                        >
+                                            <Edit2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                )}
                                 <div className="text-sm text-slate-500 font-medium">
-                                    Grade: {grade.letterGrade} ({grade.percentage}%)
+                                    Grade: {grade.letterGrade} ({grade.percentage.toFixed(1)}%)
                                 </div>
                             </div>
                             <button

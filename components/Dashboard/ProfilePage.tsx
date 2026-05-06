@@ -251,9 +251,9 @@ const ProfilePage: React.FC = () => {
                         <div className="pt-2">
                             {!isEditing && (
                                 <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     onClick={() => setIsEditing(true)}
-                                    className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm"
+                                    className="bg-white dark:bg-slate-800 shadow-sm"
                                 >
                                     <Edit2 className="h-4 w-4 mr-2" />
                                     Edit Profile

@@ -37,12 +37,15 @@ export async function gradeSubmission(request: GradingRequest): Promise<GradingR
             throw new Error('Either model answer text, PDF URL, or Image URL must be provided');
         }
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const model = genAI.getGenerativeModel({ 
+            model: 'gemini-2.5-flash',
+            generationConfig: { responseMimeType: "application/json" }
+        });
 
-        // Fetch the student answer image as base64
+        // Fetch the student answer image as blob and resize it client-side for speed
         const imageResponse = await fetch(request.studentAnswerImageUrl);
         const imageBlob = await imageResponse.blob();
-        const imageBase64 = await blobToBase64(imageBlob);
+        const imageBase64 = await resizeImage(imageBlob, 1024);
 
         // Prepare content parts for Gemini
         const contentParts: any[] = [];
@@ -73,7 +76,7 @@ export async function gradeSubmission(request: GradingRequest): Promise<GradingR
         if (request.modelAnswerImageUrl) {
             const imgResponse = await fetch(request.modelAnswerImageUrl);
             const imgBlob = await imgResponse.blob();
-            const imgBase64 = await blobToBase64(imgBlob);
+            const imgBase64 = await resizeImage(imgBlob, 1024);
 
             contentParts.push({
                 inlineData: {
@@ -262,6 +265,42 @@ function blobToBase64(blob: Blob): Promise<string> {
 }
 
 /**
+ * Resize image for faster upload and AI processing
+ */
+function resizeImage(file: Blob, maxWidth: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8)); // 80% quality jpeg
+                } else {
+                    resolve(e.target?.result as string); // fallback to original
+                }
+            };
+            img.onerror = reject;
+            img.src = e.target?.result as string;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
  * Batch grade multiple submissions
  */
 export async function batchGradeSubmissions(
@@ -288,35 +327,47 @@ export async function batchGradeSubmissions(
 }
 
 /**
- * Extract student ID from image using OCR (placeholder)
- * In production, use a proper OCR service or Gemini vision
+ * Extract student info from local file using Gemini vision
  */
-export async function extractStudentId(imageUrl: string): Promise<string | null> {
+export async function extractStudentInfo(file: File): Promise<{ studentId: string | null, studentName: string | null }> {
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+        const model = genAI.getGenerativeModel({ 
+            model: 'gemini-2.5-flash',
+            generationConfig: { responseMimeType: "application/json" }
+        });
 
-        const imageResponse = await fetch(imageUrl);
-        const imageBlob = await imageResponse.blob();
-        const imageBase64 = await blobToBase64(imageBlob);
+        // Resize image to max 1024px width for blazing fast processing
+        const base64 = await resizeImage(file, 1024);
 
-        const prompt = `Extract the student ID number from this exam paper image. 
-The ID is typically at the top of the page and may be labeled as "Student ID", "ID", "الرقم الجامعي", etc.
-Return ONLY the ID number, nothing else. If no ID is found, return "NOT_FOUND".`;
+        const prompt = `Extract the student's Name and ID number from the top of this exam paper image.
+The ID is typically at the top of the page and may be labeled as "Student ID", "ID", "الرقم الجامعي", "رقم الجلوس", "Code", etc.
+The Name is labeled as "Name", "Student Name", "الاسم", "اسم الطالب", etc.
+Respond ONLY in valid JSON format: {"studentName": "extracted name", "studentId": "extracted ID"}. If either is not found, use null.`;
 
         const result = await model.generateContent([
             prompt,
             {
                 inlineData: {
-                    data: imageBase64.split(',')[1],
-                    mimeType: imageBlob.type
+                    data: base64.split(',')[1],
+                    mimeType: file.type
                 }
             }
         ]);
 
-        const text = (await result.response.text()).trim();
-        return text === 'NOT_FOUND' ? null : text;
+        let text = (await result.response.text()).trim();
+        if (text.startsWith('```json')) {
+            text = text.replace(/```json\n?/, '').replace(/```\n?$/, '');
+        } else if (text.startsWith('```')) {
+            text = text.replace(/```\n?/, '').replace(/```\n?$/, '');
+        }
+
+        const parsed = JSON.parse(text);
+        return {
+            studentName: parsed.studentName || null,
+            studentId: parsed.studentId || null
+        };
     } catch (error) {
-        console.error('Error extracting student ID:', error);
-        return null;
+        console.error('Error extracting student info:', error);
+        return { studentId: null, studentName: null };
     }
 }

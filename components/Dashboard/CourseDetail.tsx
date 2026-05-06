@@ -73,19 +73,31 @@ const CourseDetail: React.FC = () => {
         try {
             if (!courseId) return;
 
+            // Coerce any empty strings to 0
+            const cleanScheme = {
+                final: Number(gradingScheme.final) || 0,
+                midterm: Number(gradingScheme.midterm) || 0,
+                classWork: Number(gradingScheme.classWork) || 0,
+                quizzes: Number(gradingScheme.quizzes) || 0,
+                practical: Number(gradingScheme.practical) || 0,
+                project: Number(gradingScheme.project) || 0,
+                total: 100
+            };
+
             // Validate total is 100
-            const currentTotal = Object.values(gradingScheme).reduce((a, b) => a + b, 0) - gradingScheme.total;
+            const currentTotal = Object.values(cleanScheme).reduce((a, b) => a + b, 0) - cleanScheme.total;
             if (currentTotal !== 100) {
                 alert(`Total marks must equal 100. Current total: ${currentTotal}`);
                 return;
             }
 
             await updateDoc(doc(db, 'courses', courseId), {
-                gradingScheme,
+                gradingScheme: cleanScheme,
                 updatedAt: new Date().toISOString()
             });
 
-            setCourse(prev => prev ? { ...prev, gradingScheme } : null);
+            setCourse(prev => prev ? { ...prev, gradingScheme: cleanScheme } : null);
+            setGradingScheme(cleanScheme);
             setIsEditing(false);
             alert("Grading scheme updated successfully!");
         } catch (error) {
@@ -263,10 +275,10 @@ const CourseDetail: React.FC = () => {
                                         min="0"
                                         max="100"
                                         disabled={!isEditing}
-                                        value={gradingScheme[item.key as keyof CourseGradingScheme] === 0 ? '' : gradingScheme[item.key as keyof CourseGradingScheme]}
+                                        value={gradingScheme[item.key as keyof CourseGradingScheme] === 0 && !isEditing ? 0 : gradingScheme[item.key as keyof CourseGradingScheme]}
                                         onChange={(e) => setGradingScheme(prev => ({
                                             ...prev,
-                                            [item.key]: e.target.value === '' ? 0 : Number(e.target.value)
+                                            [item.key]: e.target.value === '' ? '' : Number(e.target.value)
                                         }))}
                                         onFocus={(e) => e.target.select()}
                                         className={`w-full px-4 py-3 border rounded-xl transition-all font-medium text-lg ${isEditing
