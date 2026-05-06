@@ -14,17 +14,15 @@ service cloud.firestore {
     
     // Faculty collection: Only authenticated users can read/write their own document
     match /faculty/{facultyId} {
-      // Faculty members can read their own profile
-      allow read: if isOwner(facultyId);
+      allow read: if isAuthenticated();
       
-      // Faculty members can create their own profile during registration
+      // Faculty members can create their own profile during registration (allowing .edu.eg generally)
       allow create: if isOwner(facultyId) && 
-                       request.resource.data.email.matches('.*@aun\\.edu\\.eg$');
+                       request.resource.data.email.matches('.*@.*\\.edu\\.eg$');
       
-      // Faculty members can update their own profile (except email and role)
+      // Faculty members can update their own profile
       allow update: if isOwner(facultyId) &&
-                       request.resource.data.email == resource.data.email &&
-                       request.resource.data.role == resource.data.role;
+                       request.resource.data.email == resource.data.email;
       
       // Prevent deletion of faculty accounts
       allow delete: if false;
@@ -32,48 +30,73 @@ service cloud.firestore {
     
     // Courses collection: Faculty can only access courses they created
     match /courses/{courseId} {
-      // Faculty can read courses they own
       allow read: if isAuthenticated() && 
                      resource.data.facultyId == request.auth.uid;
       
-      // Faculty can create courses (automatically assign facultyId)
       allow create: if isAuthenticated() &&
                        request.resource.data.facultyId == request.auth.uid;
       
-      // Faculty can update their own courses
       allow update: if isAuthenticated() && 
                        resource.data.facultyId == request.auth.uid;
       
-      // Faculty can delete their own courses
+      allow delete: if isAuthenticated() && 
+                       resource.data.facultyId == request.auth.uid;
+    }
+    
+    // Exams collection: Faculty can access exams of courses they own
+    match /exams/{examId} {
+      allow read: if isAuthenticated() && 
+                     resource.data.facultyId == request.auth.uid;
+      
+      allow create: if isAuthenticated() &&
+                       request.resource.data.facultyId == request.auth.uid;
+      
+      allow update: if isAuthenticated() && 
+                       resource.data.facultyId == request.auth.uid;
+      
+      allow delete: if isAuthenticated() && 
+                       resource.data.facultyId == request.auth.uid;
+    }
+
+    // Submissions collection: Faculty can access submissions of their exams
+    match /submissions/{submissionId} {
+      allow read: if isAuthenticated() && 
+                     resource.data.facultyId == request.auth.uid;
+      
+      allow create: if isAuthenticated() &&
+                       request.resource.data.facultyId == request.auth.uid;
+      
+      allow update: if isAuthenticated() && 
+                       resource.data.facultyId == request.auth.uid;
+      
       allow delete: if isAuthenticated() && 
                        resource.data.facultyId == request.auth.uid;
     }
     
     // Students collection: Faculty can read student data
-    // Additional fine-grained access control can be added based on course enrollment
     match /students/{studentId} {
-      // All authenticated faculty can read student data
-      // In production, you might want to restrict this to students enrolled in faculty's courses
       allow read: if isAuthenticated();
-      
-      // Only allow creation/updates through cloud functions or admin SDK
       allow write: if false;
     }
     
-    // Grades collection: Protected from unauthorized modifications
+    // Grades collection
     match /grades/{gradeId} {
-      // Faculty can read grades for their courses
       allow read: if isAuthenticated();
       
-      // Grades can only be modified by the faculty who owns the course
-      // In production, verify course ownership through a function
       allow create: if isAuthenticated();
       allow update: if isAuthenticated();
       
-      // Prevent deletion of grades
-      allow delete: if false;
+      allow delete: if isAuthenticated(); // Allow deletion for admin features
     }
     
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
     // Default: Deny all other access
     match /{document=**} {
       allow read, write: if false;

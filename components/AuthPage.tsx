@@ -39,7 +39,7 @@ const AuthPage: React.FC = () => {
 
   // Email domain validation
   const validateUniversityEmail = (email: string): boolean => {
-    return email.toLowerCase().endsWith('@aun.edu.eg');
+    return email.toLowerCase().endsWith('.edu.eg');
   };
 
   const toggleMode = () => {
@@ -54,7 +54,7 @@ const AuthPage: React.FC = () => {
 
     // Validate university email for registration
     if (mode === 'register' && !validateUniversityEmail(email)) {
-      setError('Please use your official university email (@aun.edu.eg).');
+      setError('Please use your official university email (*.edu.eg).');
       setIsLoading(false);
       return;
     }
@@ -277,7 +277,7 @@ const AuthPage: React.FC = () => {
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                   University Email
-                  {mode === 'register' && <span className="text-xs text-violet-500 ml-2 font-normal">(@aun.edu.eg)</span>}
+                  {mode === 'register' && <span className="text-xs text-violet-500 ml-2 font-normal">(*.edu.eg)</span>}
                 </label>
                 <div className="relative group">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
@@ -287,7 +287,7 @@ const AuthPage: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none transition-all dark:text-white placeholder:text-slate-400"
-                    placeholder="user@aun.edu.eg"
+                    placeholder="user@bis.edu.eg"
                   />
                 </div>
               </div>

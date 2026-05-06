@@ -390,10 +390,10 @@ const DashboardLayout: React.FC = () => {
                         navigate(item.path);
                         setSidebarOpen(false);
                       }}
-                      className={`w - full flex items - center gap - 3 px - 4 py - 3 text - sm font - medium rounded - lg transition - colors ${location.pathname === item.path
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${location.pathname === item.path
                         ? 'bg-primary/5 text-primary dark:bg-blue-900/20 dark:text-blue-400'
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                        } `}
+                        }`}
                     >
                       <item.icon className="h-5 w-5" />
                       {item.label}
