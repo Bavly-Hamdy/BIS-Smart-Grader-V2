@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, XCircle, FileText, AlertCircle, Percent, ExternalLink, Image as ImageIcon, Edit2, Save } from 'lucide-react';
+import { X, CheckCircle, XCircle, FileText, AlertCircle, Percent, ExternalLink, Image as ImageIcon, Edit2, Save, ArrowLeft } from 'lucide-react';
 import { Grade, StudentSubmission } from '../../types';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
@@ -19,11 +19,19 @@ interface GradeDetailModalProps {
 const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, grade, modelAnswerText, modelAnswerPdfUrl, onGradeUpdated }) => {
     const [activeTab, setActiveTab] = useState<'analysis' | 'paper'>('analysis');
     const [submission, setSubmission] = useState<StudentSubmission | null>(null);
+    const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
+    const [activePage, setActivePage] = useState(0);
     const [loadingSubmission, setLoadingSubmission] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [isEditingScore, setIsEditingScore] = useState(false);
     const [editedScore, setEditedScore] = useState(grade.score);
     const [isSavingScore, setIsSavingScore] = useState(false);
+
+    // Manual Details State
+    const [isEditingDetails, setIsEditingDetails] = useState(false);
+    const [editedName, setEditedName] = useState(grade.studentName);
+    const [editedId, setEditedId] = useState(grade.studentId);
+    const [isSavingDetails, setIsSavingDetails] = useState(false);
 
     useEffect(() => {
         if (isOpen && grade.submissionId) {
@@ -36,16 +44,26 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
     }, [isOpen, grade]);
 
     const fetchSubmission = async () => {
-        if (!grade.submissionId) return;
+        const ids = grade.submissionIds || (grade.submissionId ? [grade.submissionId] : []);
+        if (ids.length === 0) return;
+        
         setLoadingSubmission(true);
         try {
-            const docRef = doc(db, 'submissions', grade.submissionId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setSubmission({ id: docSnap.id, ...docSnap.data() } as StudentSubmission);
+            const fetchedSubmissions: StudentSubmission[] = [];
+            for (const id of ids) {
+                const docRef = doc(db, 'submissions', id);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    fetchedSubmissions.push({ id: docSnap.id, ...docSnap.data() } as StudentSubmission);
+                }
+            }
+            
+            setSubmissions(fetchedSubmissions);
+            if (fetchedSubmissions.length > 0) {
+                setSubmission(fetchedSubmissions[0]);
             }
         } catch (error) {
-            console.error("Error fetching submission:", error);
+            console.error("Error fetching submissions:", error);
         } finally {
             setLoadingSubmission(false);
         }
@@ -88,6 +106,33 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
         }
     };
 
+    const handleSaveDetails = async () => {
+        if (!grade.id) return;
+        try {
+            setIsSavingDetails(true);
+            
+            await updateDoc(doc(db, 'grades', grade.id), {
+                studentName: editedName,
+                studentId: editedId
+            });
+
+            if (grade.submissionId) {
+                await updateDoc(doc(db, 'submissions', grade.submissionId), {
+                    studentName: editedName,
+                    studentId: editedId
+                });
+            }
+
+            setIsEditingDetails(false);
+            if (onGradeUpdated) onGradeUpdated();
+        } catch (error) {
+            console.error('Error updating student details:', error);
+            alert('Failed to update student details.');
+        } finally {
+            setIsSavingDetails(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     const result = grade.gradingResult;
@@ -112,16 +157,71 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-10">
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                                {grade.studentName}
-                                <span className="text-sm font-medium px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                                    {grade.studentId}
-                                </span>
-                            </h2>
-                            <p className="text-slate-500 dark:text-slate-400 mt-1">
-                                {grade.examTitle} • {grade.courseCode}
-                            </p>
+                        <div className="flex-1">
+                            {isEditingDetails ? (
+                                <div className="space-y-3">
+                                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                                        <div className="relative w-full sm:w-64">
+                                            <input
+                                                type="text"
+                                                value={editedName}
+                                                onChange={(e) => setEditedName(e.target.value)}
+                                                className="w-full px-3 py-2 text-lg font-bold border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                                                placeholder="Student Name"
+                                            />
+                                        </div>
+                                        <div className="relative w-full sm:w-48">
+                                            <input
+                                                type="text"
+                                                value={editedId}
+                                                onChange={(e) => setEditedId(e.target.value)}
+                                                className="w-full px-3 py-2 text-sm font-medium border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                                                placeholder="Student ID"
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={handleSaveDetails} 
+                                                disabled={isSavingDetails}
+                                                className="p-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl transition-colors shadow-sm"
+                                                title="Save Details"
+                                            >
+                                                <Save className="h-5 w-5" />
+                                            </button>
+                                            <button 
+                                                onClick={() => { 
+                                                    setIsEditingDetails(false); 
+                                                    setEditedName(grade.studentName); 
+                                                    setEditedId(grade.studentId); 
+                                                }}
+                                                className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                                                title="Cancel"
+                                            >
+                                                <X className="h-5 w-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                                        {grade.studentName}
+                                        <span className="text-sm font-medium px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                            {grade.studentId}
+                                        </span>
+                                        <button 
+                                            onClick={() => setIsEditingDetails(true)}
+                                            className="text-slate-400 hover:text-indigo-600 transition-colors p-1"
+                                            title="Edit Student Details"
+                                        >
+                                            <Edit2 className="h-4 w-4" />
+                                        </button>
+                                    </h2>
+                                    <p className="text-slate-500 dark:text-slate-400 mt-1">
+                                        {grade.examTitle} • {grade.courseCode}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                         <div className="flex items-center gap-4">
                             <div className="text-right">
@@ -295,10 +395,17 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                 {/* Student Paper */}
                                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
                                     <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">Student's Answer</h3>
-                                        {submission?.imageUrl && (
+                                        <div className="flex items-center gap-3">
+                                            <h3 className="font-semibold text-slate-900 dark:text-white">Student's Answer</h3>
+                                            {submissions.length > 1 && (
+                                                <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-bold">
+                                                    Page {activePage + 1} of {submissions.length}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {submissions[activePage]?.imageUrl && (
                                             <a
-                                                href={submission.imageUrl}
+                                                href={submissions[activePage].imageUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-xs text-primary hover:underline flex items-center gap-1"
@@ -307,7 +414,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                             </a>
                                         )}
                                     </div>
-                                    <div className="flex-1 overflow-auto bg-slate-100 dark:bg-black p-4 flex items-center justify-center relative">
+                                    <div className="flex-1 overflow-auto bg-slate-100 dark:bg-black p-4 flex flex-col items-center justify-center relative">
                                         {loadingSubmission ? (
                                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                                         ) : imageError ? (
@@ -315,13 +422,43 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                                 <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
                                                 <p>Failed to load image</p>
                                             </div>
-                                        ) : submission?.imageUrl ? (
-                                            <img
-                                                src={submission.imageUrl}
-                                                alt="Student Answer"
-                                                className="max-w-full h-auto rounded shadow-sm"
-                                                onError={() => setImageError(true)}
-                                            />
+                                        ) : submissions.length > 0 ? (
+                                            <>
+                                                <img
+                                                    src={submissions[activePage].imageUrl}
+                                                    alt={`Page ${activePage + 1}`}
+                                                    className="max-w-full h-auto rounded shadow-sm transition-opacity duration-300"
+                                                    onError={() => setImageError(true)}
+                                                />
+                                                
+                                                {submissions.length > 1 && (
+                                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full z-10 border border-white/10">
+                                                        <button 
+                                                            disabled={activePage === 0}
+                                                            onClick={() => setActivePage(p => Math.max(0, p - 1))}
+                                                            className="p-1 text-white hover:text-indigo-300 disabled:opacity-30 disabled:pointer-events-none"
+                                                        >
+                                                            <ArrowLeft className="h-4 w-4" />
+                                                        </button>
+                                                        <div className="flex gap-1.5 px-1">
+                                                            {submissions.map((_, i) => (
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => setActivePage(i)}
+                                                                    className={`w-2 h-2 rounded-full transition-all ${activePage === i ? 'bg-indigo-400 w-4' : 'bg-white/40'}`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                        <button 
+                                                            disabled={activePage === submissions.length - 1}
+                                                            onClick={() => setActivePage(p => Math.min(submissions.length - 1, p + 1))}
+                                                            className="p-1 text-white hover:text-indigo-300 disabled:opacity-30 disabled:pointer-events-none rotate-180"
+                                                        >
+                                                            <ArrowLeft className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </>
                                         ) : (
                                             <div className="text-center text-slate-400">
                                                 <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />

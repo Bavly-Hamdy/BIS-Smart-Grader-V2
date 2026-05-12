@@ -29,6 +29,7 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
     const [examDate, setExamDate] = useState('');
     const [duration, setDuration] = useState('120');
     const [totalMarks, setTotalMarks] = useState('100');
+    const [isMultiPage, setIsMultiPage] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -100,7 +101,8 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                 status: examDateTime > new Date() ? 'scheduled' : 'draft',
                 isLocked: false,
                 submissionsCount: 0,
-                gradedCount: 0
+                gradedCount: 0,
+                isMultiPage: isMultiPage
             };
 
             await addDoc(collection(db, 'exams'), examData);
@@ -276,19 +278,38 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                         </div>
 
                         {/* Total Marks */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                <FileText className="inline h-4 w-4 mr-2" />
-                                Total Marks *
-                            </label>
-                            <input
-                                type="number"
-                                required
-                                min="1"
-                                value={totalMarks}
-                                onChange={(e) => setTotalMarks(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-900 dark:text-white"
-                            />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    <FileText className="inline h-4 w-4 mr-2" />
+                                    Total Marks *
+                                </label>
+                                <input
+                                    type="number"
+                                    required
+                                    min="1"
+                                    value={totalMarks}
+                                    onChange={(e) => setTotalMarks(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-900 dark:text-white"
+                                />
+                            </div>
+
+                            <div className="flex items-end pb-1">
+                                <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full">
+                                    <div className="relative flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={isMultiPage}
+                                            onChange={(e) => setIsMultiPage(e.target.checked)}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-10 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Multi-page Exam
+                                    </span>
+                                </label>
+                            </div>
                         </div>
                     </form>
 

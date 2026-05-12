@@ -55,6 +55,7 @@ export interface Exam {
   isLocked: boolean;
   submissionsCount?: number;
   gradedCount?: number;
+  isMultiPage?: boolean;
 }
 
 export interface ModelAnswer {
@@ -128,6 +129,7 @@ export interface Grade {
   gradedAt: string;
   approvedAt?: string;
   submissionId?: string;
+  submissionIds?: string[]; // Multiple pages
   gradingResult?: {
     grade: number;
     confidence: number;

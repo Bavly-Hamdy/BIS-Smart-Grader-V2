@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { X, Upload, FileImage, AlertCircle, Check, Loader2 } from 'lucide-react';
+import { X, Upload, FileImage, AlertCircle, Check, Loader2, Copy, Link as LinkIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { auth } from '../../firebase/firebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
@@ -314,17 +314,36 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                                 <h3 className="font-semibold text-slate-900 dark:text-white">
                                     Files ({files.length})
                                 </h3>
-                                {files.map(file => (
-                                    <FileCard
-                                        key={file.id}
-                                        file={file}
-                                        onRemove={() => removeFile(file.id)}
-                                        onStudentAssign={(studentId, studentName) =>
-                                            updateFileStudent(file.id, studentId, studentName)
-                                        }
-                                        disabled={isUploading || file.status !== 'pending'}
-                                    />
-                                ))}
+                                {files.map((file, index) => {
+                                    const isSameAsPrev = index > 0 && file.studentId && file.studentId === files[index - 1].studentId;
+                                    const hasPrevStudent = index > 0 && !!files[index - 1].studentId;
+
+                                    return (
+                                        <div key={file.id} className="relative">
+                                            {isSameAsPrev && (
+                                                <div className="absolute -top-3 left-8 z-10 flex items-center gap-2">
+                                                    <div className="h-6 w-0.5 bg-indigo-500 rounded-full" />
+                                                    <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 flex items-center gap-1">
+                                                        <LinkIcon className="h-2.5 w-2.5" /> Grouped with Page {index}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <FileCard
+                                                file={file}
+                                                onRemove={() => removeFile(file.id)}
+                                                onStudentAssign={(studentId, studentName) =>
+                                                    updateFileStudent(file.id, studentId, studentName)
+                                                }
+                                                onCopyFromPrevious={hasPrevStudent ? () => {
+                                                    const prev = files[index - 1];
+                                                    updateFileStudent(file.id, prev.studentId || '', prev.studentName || '');
+                                                } : undefined}
+                                                disabled={isUploading || file.status !== 'pending'}
+                                                isGrouped={isSameAsPrev}
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -356,17 +375,18 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     );
 };
 
-// File Card Component
 interface FileCardProps {
     file: UploadFile;
     onRemove: () => void;
     onStudentAssign: (studentId: string, studentName: string) => void;
+    onCopyFromPrevious?: () => void;
     disabled: boolean;
+    isGrouped?: boolean;
 }
 
-const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, disabled }) => {
+const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, onCopyFromPrevious, disabled, isGrouped }) => {
     return (
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+        <div className={`rounded-lg p-4 transition-all ${isGrouped ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-l-4 border-indigo-500' : 'bg-slate-50 dark:bg-slate-800'}`}>
             <div className="flex items-start gap-4">
                 {/* Preview */}
                 <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0">
@@ -397,22 +417,53 @@ const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, di
                                     <span>AI is detecting Student Info...</span>
                                 </div>
                             ) : (
-                                <div className="space-y-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <input
                                         type="text"
                                         placeholder="Enter Student ID"
                                         value={file.studentId || ''}
                                         onChange={(e) => {
-                                            const id = e.target.value;
-                                            onStudentAssign(id, file.studentName || `Student ${id}`);
+                                            onStudentAssign(e.target.value, file.studentName || '');
                                         }}
                                         disabled={disabled}
                                         className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded focus:ring-2 focus:ring-primary/20 outline-none"
                                     />
-                                    {file.studentName && (
-                                        <p className="text-xs text-green-600 dark:text-green-400 font-medium">
-                                            Identified as: {file.studentName}
-                                        </p>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter Student Name"
+                                        value={file.studentName || ''}
+                                        onChange={(e) => {
+                                            onStudentAssign(file.studentId || '', e.target.value);
+                                        }}
+                                        disabled={disabled}
+                                        className="w-full px-3 py-1.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded focus:ring-2 focus:ring-primary/20 outline-none"
+                                    />
+                                    {file.studentName && file.studentId && (
+                                        <div className="sm:col-span-2 flex items-center justify-between">
+                                            <p className="text-[10px] text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded inline-block">
+                                                Verified: {file.studentName} ({file.studentId})
+                                            </p>
+                                            {onCopyFromPrevious && (
+                                                <button
+                                                    type="button"
+                                                    onClick={onCopyFromPrevious}
+                                                    className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                                                >
+                                                    <Copy className="h-3 w-3" /> Same as above
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                    {!file.studentId && onCopyFromPrevious && (
+                                        <div className="sm:col-span-2">
+                                            <button
+                                                type="button"
+                                                onClick={onCopyFromPrevious}
+                                                className="text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 px-2 py-1 rounded border border-indigo-100 dark:border-indigo-800 flex items-center gap-1 w-fit mt-1"
+                                            >
+                                                <Copy className="h-3 w-3" /> Copy student from previous page
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             )}

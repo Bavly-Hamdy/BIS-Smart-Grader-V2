@@ -238,7 +238,7 @@ const ExamDetail: React.FC = () => {
         setGradingProgress({ current: 0, total: submissions.length });
 
         try {
-            // Filter pending submissions
+            // Group pending submissions by studentId
             const pendingSubmissions = submissions.filter(s => s.status === 'pending' || s.status === 'processing');
 
             if (pendingSubmissions.length === 0) {
@@ -247,44 +247,52 @@ const ExamDetail: React.FC = () => {
                 return;
             }
 
-            // Prepare requests
-            const requests: GradingRequest[] = pendingSubmissions.map(sub => ({
-                studentAnswerImageUrl: sub.imageUrl,
-                modelAnswerText: modelAnswerText || undefined,
-                modelAnswerPdfUrl: modelAnswerPdfUrl || undefined,
-                modelAnswerImageUrl: modelAnswerImageUrl || undefined,
-                maxScore: exam.totalMarks,
-                examTitle: exam.title,
-                gradingRubric: "Grade strictly based on the model answer provided."
-            }));
+            // Group by studentId
+            const studentGroups: Record<string, typeof submissions> = {};
+            pendingSubmissions.forEach(sub => {
+                if (!studentGroups[sub.studentId]) {
+                    studentGroups[sub.studentId] = [];
+                }
+                studentGroups[sub.studentId].push(sub);
+            });
 
-            // Start batch grading
-            // In a real app, this should process one by one and update firestore incrementally
-            // For this demo, we'll try to batch process or loop here.
-            // The service has batchGradeSubmissions but it returns all results at once.
-            // Better to loop here to update Firestore individually and show progress.
+            const uniqueStudentIds = Object.keys(studentGroups);
+            setGradingProgress({ current: 0, total: uniqueStudentIds.length });
 
             let completed = 0;
 
-            for (let i = 0; i < pendingSubmissions.length; i++) {
-                const sub = pendingSubmissions[i];
-                const request = requests[i];
+            for (const studentId of uniqueStudentIds) {
+                const studentSubmissions = studentGroups[studentId];
+                const studentName = studentSubmissions[0].studentName;
+                const imageUrls = studentSubmissions.map(s => s.imageUrl);
 
                 try {
-                    // Update status to processing
-                    await updateDoc(doc(db, 'submissions', sub.id), { status: 'processing' });
+                    // Update all status to processing
+                    for (const sub of studentSubmissions) {
+                        await updateDoc(doc(db, 'submissions', sub.id), { status: 'processing' });
+                    }
+
+                    // Prepare request with all images
+                    const request: GradingRequest = {
+                        studentAnswerImageUrls: imageUrls,
+                        modelAnswerText: modelAnswerText || undefined,
+                        modelAnswerPdfUrl: modelAnswerPdfUrl || undefined,
+                        modelAnswerImageUrl: modelAnswerImageUrl || undefined,
+                        maxScore: exam.totalMarks,
+                        examTitle: exam.title,
+                        gradingRubric: "Grade strictly based on the model answer provided. This submission contains multiple pages."
+                    };
 
                     // Call AI
-                    const result = await batchGradeSubmissions([request]); // reuse function or call gradeSubmission directly
-                    const gradeData = result[0]; // assuming single result
+                    const result = await batchGradeSubmissions([request]);
+                    const gradeData = result[0];
 
                     // Create Grade Record in Firestore
-                    // We need a 'grades' collection based on the schema in task.md
                     const gradeRecord = {
-                        studentId: gradeData.detectedStudentId || sub.studentId,
-                        studentName: gradeData.detectedStudentName || sub.studentName,
+                        studentId: gradeData.detectedStudentId || studentId,
+                        studentName: gradeData.detectedStudentName || studentName,
                         examId: exam.id,
-                        facultyId: exam.facultyId || auth.currentUser?.uid, // Add facultyId for filtering
+                        facultyId: exam.facultyId || auth.currentUser?.uid,
                         examTitle: exam.title,
                         courseId: exam.courseId,
                         courseName: exam.courseName,
@@ -295,30 +303,34 @@ const ExamDetail: React.FC = () => {
                         letterGrade: calculateLetterGrade((gradeData.grade / exam.totalMarks) * 100),
                         status: 'draft',
                         gradedAt: new Date().toISOString(),
-                        submissionId: sub.id,
+                        submissionId: studentSubmissions[0].id, // Reference the first submission doc
+                        submissionIds: studentSubmissions.map(s => s.id), // Store all page refs
                         gradingResult: {
                             ...gradeData,
                             gradedBy: 'AI-Gemini',
                             detectedStudentName: gradeData.detectedStudentName || null,
-                            detectedStudentId: gradeData.detectedStudentId || null
+                            detectedStudentId: gradeData.detectedStudentId || null,
+                            pageCount: imageUrls.length
                         }
                     };
 
                     // Save Grade
                     await addDocFirestore(collection(db, 'grades'), gradeRecord);
 
-                    // Update Submission Status
-                    await updateDoc(doc(db, 'submissions', sub.id), {
-                        status: 'graded',
-                        aiGrade: gradeData.grade,
-                        finalGrade: gradeData.grade
-                    });
+                    // Update all Submissions Status
+                    for (const sub of studentSubmissions) {
+                        await updateDoc(doc(db, 'submissions', sub.id), {
+                            status: 'graded',
+                            aiGrade: gradeData.grade,
+                            finalGrade: gradeData.grade
+                        });
+                    }
 
                     completed++;
-                    setGradingProgress({ current: completed, total: pendingSubmissions.length });
+                    setGradingProgress({ current: completed, total: uniqueStudentIds.length });
 
                 } catch (err) {
-                    console.error(`Error grading submission ${sub.id}:`, err);
+                    console.error(`Error grading submission for student ${studentId}:`, err);
                     // Continue to next
                 }
             }

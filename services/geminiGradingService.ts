@@ -7,7 +7,8 @@ const API_KEY = (import.meta as any).env?.VITE_GEMINI_API_KEY || 'AIzaSyCWYzUsmO
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export interface GradingRequest {
-    studentAnswerImageUrl: string;
+    studentAnswerImageUrl?: string;
+    studentAnswerImageUrls?: string[]; // Support for multiple pages
     modelAnswerText?: string;
     modelAnswerPdfUrl?: string;
     modelAnswerImageUrl?: string;
@@ -42,21 +43,28 @@ export async function gradeSubmission(request: GradingRequest): Promise<GradingR
             generationConfig: { responseMimeType: "application/json" }
         });
 
-        // Fetch the student answer image as blob and resize it client-side for speed
-        const imageResponse = await fetch(request.studentAnswerImageUrl);
-        const imageBlob = await imageResponse.blob();
-        const imageBase64 = await resizeImage(imageBlob, 1024);
-
         // Prepare content parts for Gemini
         const contentParts: any[] = [];
 
-        // Add student answer image
-        contentParts.push({
-            inlineData: {
-                data: imageBase64.split(',')[1], // Remove data:image/... prefix
-                mimeType: imageBlob.type
-            }
-        });
+        // Add student answer image(s)
+        const imageUrls = request.studentAnswerImageUrls || (request.studentAnswerImageUrl ? [request.studentAnswerImageUrl] : []);
+        
+        if (imageUrls.length === 0) {
+            throw new Error('At least one student answer image must be provided');
+        }
+
+        for (const url of imageUrls) {
+            const imageResponse = await fetch(url);
+            const imageBlob = await imageResponse.blob();
+            const imageBase64 = await resizeImage(imageBlob, 1024);
+            
+            contentParts.push({
+                inlineData: {
+                    data: imageBase64.split(',')[1],
+                    mimeType: imageBlob.type
+                }
+            });
+        }
 
         // If PDF model answer, fetch and add it
         if (request.modelAnswerPdfUrl) {
@@ -176,10 +184,10 @@ Before grading, you MUST first identify the student from the top of the exam pap
 3. If the handwriting is messy, try your best to interpret it.
 
 **Grading Task:**
-1. Carefully read the handwritten student answer in the FIRST image
+1. Carefully read the handwritten student answer in the ATTACHED images (there may be multiple pages).
 2. Compare it with the model answer ${request.modelAnswerPdfUrl || request.modelAnswerImageUrl ? 'in the attached document/image' : 'provided below'}
-3. Grade the answer based on the rubric
-4. Provide detailed analysis
+3. Grade the answer based on the rubric, considering all provided pages as a single exam submission.
+4. Provide detailed analysis.
 
 ${modelAnswerSource}
 
