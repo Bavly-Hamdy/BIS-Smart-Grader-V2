@@ -383,9 +383,9 @@ const ExamDetail: React.FC = () => {
                 <div>
                     <button
                         onClick={() => navigate('/faculty-dashboard/exams')}
-                        className="flex items-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-2"
+                        className="flex items-center text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors mb-4 font-medium group"
                     >
-                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
                         Back to Exams
                     </button>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">

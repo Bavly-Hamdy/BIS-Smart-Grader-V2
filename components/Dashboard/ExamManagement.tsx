@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, FileText, Clock, CheckCircle, AlertCircle, Filter, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Calendar, FileText, Clock, CheckCircle, AlertCircle, Filter, Search, ArrowLeft } from 'lucide-react';
 import { auth, db } from '../../firebase/firebaseConfig';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { motion } from 'framer-motion';
@@ -10,6 +11,7 @@ import ExamCard from './ExamCard';
 import { Exam } from '../../types';
 
 const ExamManagement: React.FC = () => {
+    const navigate = useNavigate();
     const [exams, setExams] = useState<Exam[]>([]);
     const [filteredExams, setFilteredExams] = useState<Exam[]>([]);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -124,6 +126,13 @@ const ExamManagement: React.FC = () => {
 
                 <div className="relative p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
+                        <button
+                            onClick={() => navigate('/faculty-dashboard')}
+                            className="flex items-center text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors mb-4 font-medium group"
+                        >
+                            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                            Back to Overview
+                        </button>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold uppercase tracking-wider rounded-full">
                                 Examinations

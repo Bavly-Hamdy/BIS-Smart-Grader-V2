@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../../firebase/firebaseConfig';
 import { Grade } from '../../types';
-import { User, Search, TrendingUp, BookOpen, GraduationCap, ChevronRight, Award, Trophy } from 'lucide-react';
+import { User, Search, TrendingUp, BookOpen, GraduationCap, ChevronRight, Award, Trophy, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface StudentSummary {
@@ -137,6 +137,13 @@ const StudentList: React.FC = () => {
 
                 <div className="relative p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
+                        <button
+                            onClick={() => navigate('/faculty-dashboard')}
+                            className="flex items-center text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors mb-4 font-medium group"
+                        >
+                            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                            Back to Overview
+                        </button>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="px-3 py-1 bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 text-xs font-bold uppercase tracking-wider rounded-full">
                                 Academic Performance

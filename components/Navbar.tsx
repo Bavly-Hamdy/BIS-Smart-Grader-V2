@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, GraduationCap, Sun, Moon } from 'lucide-react';
 import Button from './Button';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTheme } from '../context/ThemeContext';
 
 interface NavbarProps {
   customScrolled?: boolean;
@@ -16,15 +17,7 @@ const Navbar: React.FC<NavbarProps> = ({ customScrolled, activeSection, onNaviga
   const [internalScrolled, setInternalScrolled] = useState(false);
   const isScrolled = customScrolled !== undefined ? customScrolled : internalScrolled;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [theme, setTheme] = useState(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem('theme')) {
-      return localStorage.getItem('theme') || 'light';
-    }
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    return 'light';
-  });
+  const { theme, toggleTheme } = useTheme();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -50,18 +43,6 @@ const Navbar: React.FC<NavbarProps> = ({ customScrolled, activeSection, onNaviga
     }
   }, [location]);
 
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
 
   const navLinks = [
     { name: 'Home', target: 'home' },

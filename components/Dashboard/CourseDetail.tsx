@@ -174,30 +174,31 @@ const CourseDetail: React.FC = () => {
             <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
                 <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 opacity-10"></div>
                 <div className="relative p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="flex items-start gap-4">
-                        <Button
-                            variant="outline"
-                            size="sm"
+                    <div className="flex-1">
+                        <button
                             onClick={() => navigate('/faculty-dashboard/courses')}
-                            className="bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 backdrop-blur-sm shrink-0 mt-1"
+                            className="flex items-center text-violet-500 hover:text-violet-700 dark:hover:text-violet-300 transition-colors mb-4 font-medium group"
                         >
-                            <ArrowLeft className="h-5 w-5 text-slate-700 dark:text-slate-300" />
-                        </Button>
-                        <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <span className="px-3 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-lg text-sm font-bold tracking-wide">
-                                    {course.code}
-                                </span>
-                                <span className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-1.5">
-                                    <span className="w-1 h-1 rounded-full bg-slate-400"></span>
-                                    {course.semester}
-                                </span>
+                            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                            Back to Courses
+                        </button>
+                        <div className="flex items-start gap-4">
+                            <div>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <span className="px-3 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-lg text-sm font-bold tracking-wide">
+                                        {course.code}
+                                    </span>
+                                    <span className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-1.5">
+                                        <span className="w-1 h-1 rounded-full bg-slate-400"></span>
+                                        {course.semester}
+                                    </span>
+                                </div>
+                                <h1 className="text-3xl font-bold text-slate-900 dark:text-white leading-tight">{course.name}</h1>
+                                <p className="text-slate-600 dark:text-slate-400 mt-2 flex items-center gap-2">
+                                    <BookOpen className="h-4 w-4" />
+                                    {course.creditHours} Credit Hours
+                                </p>
                             </div>
-                            <h1 className="text-3xl font-bold text-slate-900 dark:text-white leading-tight">{course.name}</h1>
-                            <p className="text-slate-600 dark:text-slate-400 mt-2 flex items-center gap-2">
-                                <BookOpen className="h-4 w-4" />
-                                {course.creditHours} Credit Hours
-                            </p>
                         </div>
                     </div>
 

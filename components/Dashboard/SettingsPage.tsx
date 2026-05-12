@@ -16,7 +16,8 @@ import {
     CheckCircle2,
     Settings,
     User,
-    Laptop
+    Laptop,
+    ArrowLeft
 } from 'lucide-react';
 import Button from '../Button';
 import { auth, db } from '../../firebase/firebaseConfig';
@@ -25,17 +26,16 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
+import { useTheme } from '../../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SettingsPage: React.FC = () => {
     const navigate = useNavigate();
     const { t, setLanguage, language } = useLanguage();
     const { addToast } = useToast();
+    const { theme, setTheme: setGlobalTheme } = useTheme();
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'notifications' | 'security'>('appearance');
-
-    // Theme State
-    const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
 
     // Accessibility State
     const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large'>('medium');
@@ -58,8 +58,7 @@ const SettingsPage: React.FC = () => {
             if (docSnap.exists() && docSnap.data().settings) {
                 const settings = docSnap.data().settings;
                 if (settings.theme) {
-                    setTheme(settings.theme);
-                    applyTheme(settings.theme);
+                    setGlobalTheme(settings.theme);
                 }
                 if (settings.fontSize) {
                     setFontSize(settings.fontSize);
@@ -78,9 +77,7 @@ const SettingsPage: React.FC = () => {
                 // Fallback to local storage
                 const savedTheme = localStorage.getItem('theme') as any || 'system';
                 const savedFontSize = localStorage.getItem('fontSize') as any || 'medium';
-                setTheme(savedTheme);
-                setFontSize(savedFontSize);
-                applyTheme(savedTheme);
+                setGlobalTheme(savedTheme);
                 applyFontSize(savedFontSize);
             }
         };
@@ -98,14 +95,6 @@ const SettingsPage: React.FC = () => {
         }
     };
 
-    const applyTheme = (t: string) => {
-        const root = window.document.documentElement;
-        if (t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
-        }
-    };
 
     const applyFontSize = (size: string) => {
         const root = window.document.documentElement;
@@ -123,9 +112,7 @@ const SettingsPage: React.FC = () => {
     };
 
     const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
-        setTheme(newTheme);
-        localStorage.setItem('theme', newTheme);
-        applyTheme(newTheme);
+        setGlobalTheme(newTheme);
         saveSettings({ theme: newTheme });
         addToast(`Theme set to ${newTheme}`, 'success');
     };
@@ -210,6 +197,13 @@ const SettingsPage: React.FC = () => {
                 <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
 
                 <div className="relative p-8 md:p-10">
+                    <button
+                        onClick={() => navigate('/faculty-dashboard')}
+                        className="flex items-center text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors mb-4 font-medium group"
+                    >
+                        <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                        Back to Overview
+                    </button>
                     <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
                         {t('settings_title')}
                     </h1>

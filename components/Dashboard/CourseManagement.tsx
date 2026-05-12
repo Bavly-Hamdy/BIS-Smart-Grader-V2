@@ -12,7 +12,8 @@ import {
     AlertCircle,
     CheckCircle2,
     PieChart,
-    GraduationCap
+    GraduationCap,
+    ArrowLeft
 } from 'lucide-react';
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase/firebaseConfig';
@@ -220,6 +221,13 @@ const CourseManagement: React.FC = () => {
 
                 <div className="relative p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
+                        <button
+                            onClick={() => navigate('/faculty-dashboard')}
+                            className="flex items-center text-violet-500 hover:text-violet-700 dark:hover:text-violet-300 transition-colors mb-4 font-medium group"
+                        >
+                            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                            Back to Overview
+                        </button>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="px-3 py-1 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-400 text-xs font-bold uppercase tracking-wider rounded-full">
                                 Academic Resources

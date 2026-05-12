@@ -19,45 +19,48 @@ import RequireAuth from './components/RequireAuth';
 
 import { LanguageProvider } from './context/LanguageContext';
 import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 const App: React.FC = () => {
   return (
-    <LanguageProvider>
-      <ToastProvider>
-        <HashRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<AuthPage />} />
+    <ThemeProvider>
+      <LanguageProvider>
+        <ToastProvider>
+          <HashRouter>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<AuthPage />} />
 
-            {/* Protected Faculty Dashboard Routes */}
-            <Route path="/faculty-dashboard" element={
-              <RequireAuth>
-                <DashboardLayout />
-              </RequireAuth>
-            }>
-              <Route index element={<DashboardHome />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="exams" element={<ExamManagement />} />
-              <Route path="exams/:examId" element={<ExamDetail />} />
-              <Route path="exams/:examId/grades" element={<GradeSheet />} />
+              {/* Protected Faculty Dashboard Routes */}
+              <Route path="/faculty-dashboard" element={
+                <RequireAuth>
+                  <DashboardLayout />
+                </RequireAuth>
+              }>
+                <Route index element={<DashboardHome />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="exams" element={<ExamManagement />} />
+                <Route path="exams/:examId" element={<ExamDetail />} />
+                <Route path="exams/:examId/grades" element={<GradeSheet />} />
 
-              {/* Course Management Routes */}
-              <Route path="courses" element={<CourseManagement />} />
-              <Route path="courses/:courseId" element={<CourseDetail />} />
+                {/* Course Management Routes */}
+                <Route path="courses" element={<CourseManagement />} />
+                <Route path="courses/:courseId" element={<CourseDetail />} />
 
-              {/* Student Management Routes */}
-              <Route path="students" element={<StudentList />} />
-              <Route path="students/:studentId" element={<StudentDetail />} />
+                {/* Student Management Routes */}
+                <Route path="students" element={<StudentList />} />
+                <Route path="students/:studentId" element={<StudentDetail />} />
 
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </HashRouter>
-      </ToastProvider>
-    </LanguageProvider>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </HashRouter>
+        </ToastProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 };
 

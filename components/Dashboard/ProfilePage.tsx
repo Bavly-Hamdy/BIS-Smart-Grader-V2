@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, deleteField } from 'firebase/firestore';
 import {
     User, Mail, Briefcase, GraduationCap, BookOpen, Save, Edit2, X,
-    Camera, MapPin, Calendar, Award, Upload, Trash2, CheckCircle2
+    Camera, MapPin, Calendar, Award, Upload, Trash2, CheckCircle2,
+    ArrowLeft
 } from 'lucide-react';
 import Button from '../Button';
 import { FacultyProfile } from '../../types';
@@ -13,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
 
 const ProfilePage: React.FC = () => {
+    const navigate = useNavigate();
     const { addToast } = useToast();
     const [profile, setProfile] = useState<FacultyProfile | null>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -248,7 +251,15 @@ const ProfilePage: React.FC = () => {
                         </div>
 
                         {/* Edit Button */}
-                        <div className="pt-2">
+                        <div className="pt-2 flex flex-col items-end gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => navigate('/faculty-dashboard')}
+                                className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 text-slate-600"
+                            >
+                                <ArrowLeft className="h-4 w-4 mr-2" />
+                                Back to Overview
+                            </Button>
                             {!isEditing && (
                                 <Button
                                     variant="outline"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
     Download,
     FileSpreadsheet,
@@ -16,7 +16,11 @@ import {
     ArrowUpRight,
     ArrowDownRight,
     LayoutDashboard,
-    Trash2
+    Trash2,
+    Send,
+    Share2,
+    Check,
+    ArrowLeft
 } from 'lucide-react';
 import { db } from '../../firebase/firebaseConfig';
 import { collection, query, where, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
@@ -29,6 +33,7 @@ import GradeAnalytics from './GradeAnalytics';
 
 const GradeSheetPage: React.FC = () => {
     const { examId } = useParams<{ examId: string }>();
+    const navigate = useNavigate();
     const [gradeSheet, setGradeSheet] = useState<GradeSheet | null>(null);
     const [filteredGrades, setFilteredGrades] = useState<Grade[]>([]);
     const [loading, setLoading] = useState(true);
@@ -36,6 +41,7 @@ const GradeSheetPage: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'approved' | 'published'>('all');
     const [gradeFilter, setGradeFilter] = useState<'all' | 'pass' | 'fail'>('all');
     const [showAnalytics, setShowAnalytics] = useState(false);
+    const [isPublishing, setIsPublishing] = useState(false);
 
     // Detail Modal State
     const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
@@ -151,6 +157,55 @@ const GradeSheetPage: React.FC = () => {
         setIsDetailModalOpen(true);
     };
 
+    const handlePublishAll = async () => {
+        if (!gradeSheet || gradeSheet.grades.length === 0) return;
+        
+        const unpublishedGrades = gradeSheet.grades.filter(g => g.status !== 'published');
+        if (unpublishedGrades.length === 0) {
+            alert('All results are already published!');
+            return;
+        }
+
+        if (!window.confirm(`Are you sure you want to publish all ${unpublishedGrades.length} unpublished results? This will make them visible to students.`)) return;
+
+        try {
+            setIsPublishing(true);
+            const publishPromises = unpublishedGrades.map(g => 
+                updateDoc(doc(db, 'grades', g.id), { 
+                    status: 'published', 
+                    publishedAt: new Date().toISOString() 
+                })
+            );
+            
+            await Promise.all(publishPromises);
+            alert('All results have been published successfully!');
+            fetchGrades();
+        } catch (error) {
+            console.error('Error publishing results:', error);
+            alert('Failed to publish some results.');
+        } finally {
+            setIsPublishing(false);
+        }
+    };
+
+    const handlePublishGrade = async (grade: Grade) => {
+        const newStatus = grade.status === 'published' ? 'draft' : 'published';
+        const action = newStatus === 'published' ? 'publish' : 'unpublish';
+        
+        if (!window.confirm(`Are you sure you want to ${action} this result?`)) return;
+
+        try {
+            await updateDoc(doc(db, 'grades', grade.id), { 
+                status: newStatus,
+                publishedAt: newStatus === 'published' ? new Date().toISOString() : null
+            });
+            fetchGrades();
+        } catch (error) {
+            console.error('Error updating grade status:', error);
+            alert('Failed to update grade status.');
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -185,6 +240,13 @@ const GradeSheetPage: React.FC = () => {
 
                 <div className="relative p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                     <div className="flex-1">
+                        <button
+                            onClick={() => navigate(`/faculty-dashboard/exams/${examId}`)}
+                            className="flex items-center text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors mb-4 font-medium group"
+                        >
+                            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                            Back to Exam Detail
+                        </button>
                         <div className="flex items-center gap-3 mb-3">
                             <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider rounded-full text-center min-w-[60px]">
                                 {gradeSheet.courseCode}
@@ -228,6 +290,15 @@ const GradeSheetPage: React.FC = () => {
                         >
                             <FileText className="h-5 w-5 mr-2" />
                             Export PDF
+                        </Button>
+                        <Button
+                            variant="primary"
+                            onClick={handlePublishAll}
+                            isLoading={isPublishing}
+                            className="h-11 px-6 rounded-xl font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none border-0"
+                        >
+                            <Send className="h-5 w-5 mr-2" />
+                            Publish All
                         </Button>
                     </div>
                 </div>
@@ -352,6 +423,7 @@ const GradeSheetPage: React.FC = () => {
                                         index={index}
                                         onView={() => handleViewGrade(grade)}
                                         onDelete={() => handleDeleteGrade(grade)}
+                                        onPublish={() => handlePublishGrade(grade)}
                                     />
                                 ))
                             ) : (
@@ -429,7 +501,7 @@ const StatCard = ({ label, value, icon: Icon, trendLabel, trendPositive, color }
 };
 
 // Premium Grade Row
-const GradeRow: React.FC<{ grade: Grade; index: number; onView: () => void; onDelete: () => void }> = ({ grade, index, onView, onDelete }) => {
+const GradeRow: React.FC<{ grade: Grade; index: number; onView: () => void; onDelete: () => void; onPublish: () => void }> = ({ grade, index, onView, onDelete, onPublish }) => {
     const isPassing = grade.percentage >= 60;
 
     // Generate initials
@@ -491,6 +563,15 @@ const GradeRow: React.FC<{ grade: Grade; index: number; onView: () => void; onDe
                 </span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right flex items-center justify-end gap-2">
+                <button
+                    onClick={onPublish}
+                    className={`p-2.5 rounded-xl transition-all shadow-sm hover:shadow ${grade.status === 'published' 
+                        ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40' 
+                        : 'text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/40'}`}
+                    title={grade.status === 'published' ? 'Unpublish Result' : 'Publish Result'}
+                >
+                    {grade.status === 'published' ? <Check className="h-5 w-5" /> : <Send className="h-5 w-5" />}
+                </button>
                 <button
                     onClick={onView}
                     className="p-2.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:bg-indigo-900/40 rounded-xl transition-all shadow-sm hover:shadow"

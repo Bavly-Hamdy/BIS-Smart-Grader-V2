@@ -15,7 +15,9 @@ import {
   UserCircle,
   FileText,
   GraduationCap,
-  User
+  User,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { auth, db } from '../../firebase/firebaseConfig';
 // @ts-ignore - fix for exported member error
@@ -25,6 +27,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FacultyProfile, Notification } from '../../types';
 import { fetchNotifications } from '../../services/notificationService';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -32,6 +35,7 @@ const DashboardLayout: React.FC = () => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [facultyData, setFacultyData] = useState<FacultyProfile | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -200,7 +204,16 @@ const DashboardLayout: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors focus:outline-none rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
             {/* Notification Dropdown */}
             <div className="relative">
               <button

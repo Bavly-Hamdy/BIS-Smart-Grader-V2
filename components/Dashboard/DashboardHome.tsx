@@ -11,14 +11,14 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { BookOpen, Users, FileCheck, Clock, TrendingUp, AlertTriangle, Calendar, GraduationCap } from 'lucide-react';
+import { BookOpen, Users, FileCheck, Clock, TrendingUp, AlertTriangle, Calendar, GraduationCap, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CourseCard from './CourseCard';
 import { db, auth } from '../../firebase/firebaseConfig';
 import { collection, query, where, onSnapshot, getDocs, doc, getDoc } from 'firebase/firestore';
 import { Course, Exam, FacultyProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const DashboardHome: React.FC = () => {
   const navigate = useNavigate();
@@ -33,6 +33,8 @@ const DashboardHome: React.FC = () => {
   const [totalStudents, setTotalStudents] = useState(0);
   const [averageScore, setAverageScore] = useState(0);
   const [gradeDistribution, setGradeDistribution] = useState<any[]>([]);
+  const [showStudentBreakdown, setShowStudentBreakdown] = useState(false);
+  const [studentBreakdown, setStudentBreakdown] = useState<any[]>([]);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -94,8 +96,32 @@ const DashboardHome: React.FC = () => {
 
         const processGrades = (gradeData: any[]) => {
           setGrades(gradeData);
+          
+          // Unique students overall
           const uniqueStudents = new Set(gradeData.map(g => g.studentId));
           setTotalStudents(uniqueStudents.size);
+
+          // Breakdown per course
+          const breakdownMap: Record<string, { name: string, code: string, students: Set<string> }> = {};
+          gradeData.forEach(g => {
+            if (!breakdownMap[g.courseId]) {
+              breakdownMap[g.courseId] = { 
+                name: g.courseName || 'Unknown Course', 
+                code: g.courseCode || '',
+                students: new Set() 
+              };
+            }
+            breakdownMap[g.courseId].students.add(g.studentId);
+          });
+
+          const breakdown = Object.entries(breakdownMap).map(([id, data]) => ({
+            courseId: id,
+            courseName: data.name,
+            courseCode: data.code,
+            count: data.students.size
+          })).sort((a, b) => b.count - a.count);
+          
+          setStudentBreakdown(breakdown);
 
           if (gradeData.length > 0) {
             const total = gradeData.reduce((acc, curr) => acc + (curr.totalScore || curr.score || 0), 0);
@@ -144,7 +170,7 @@ const DashboardHome: React.FC = () => {
   const recentGradesCount = grades.length; // Simplified for demo
 
   // Premium Stat Card Component
-  const StatCard = ({ label, value, icon: Icon, color, delay }: any) => {
+  const StatCard = ({ label, value, icon: Icon, color, delay, onClick, isClickable }: any) => {
     const colorStyles = {
       blue: { bg: 'bg-blue-50 dark:bg-blue-900/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-100 dark:border-blue-800' },
       emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/10', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-100 dark:border-emerald-800' },
@@ -161,15 +187,23 @@ const DashboardHome: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: delay * 0.1 }}
-        className={`bg-white dark:bg-slate-900 p-6 rounded-2xl border ${style.border} shadow-sm relative overflow-hidden group hover:shadow-md transition-all`}
+        onClick={onClick}
+        className={`bg-white dark:bg-slate-900 p-6 rounded-2xl border ${style.border} shadow-sm relative overflow-hidden group hover:shadow-md transition-all ${isClickable ? 'cursor-pointer active:scale-95' : ''}`}
       >
         <div className={`absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity`}>
           <Icon className={`h-24 w-24 ${style.text}`} />
         </div>
 
         <div className="relative">
-          <div className={`w-10 h-10 rounded-lg ${style.bg} flex items-center justify-center mb-3`}>
-            <Icon className={`h-5 w-5 ${style.text}`} />
+          <div className="flex justify-between items-start">
+            <div className={`w-10 h-10 rounded-lg ${style.bg} flex items-center justify-center mb-3`}>
+              <Icon className={`h-5 w-5 ${style.text}`} />
+            </div>
+            {isClickable && (
+              <div className={`p-1.5 rounded-full ${style.bg} ${style.text} opacity-0 group-hover:opacity-100 transition-opacity`}>
+                {showStudentBreakdown && label.includes('Students') ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </div>
+            )}
           </div>
           <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-1">{value}</h3>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
@@ -219,12 +253,68 @@ const DashboardHome: React.FC = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
         <StatCard label={t('active_courses') || 'Courses'} value={courses.length} icon={BookOpen} color="blue" delay={1} />
-        <StatCard label={t('total_students') || 'Students'} value={totalStudents} icon={Users} color="teal" delay={2} />
+        <StatCard 
+          label={t('total_students') || 'Students'} 
+          value={totalStudents} 
+          icon={Users} 
+          color="teal" 
+          delay={2} 
+          isClickable={true}
+          onClick={() => setShowStudentBreakdown(!showStudentBreakdown)}
+        />
         <StatCard label={t('active_exams') || 'Exams'} value={activeExams} icon={Calendar} color="purple" delay={3} />
         <StatCard label={t('new_grades') || 'Grades'} value={recentGradesCount} icon={FileCheck} color="indigo" delay={4} />
         <StatCard label={t('avg_score') || 'Avg Score'} value={`${averageScore}%`} icon={TrendingUp} color="emerald" delay={5} />
         <StatCard label={t('at_risk') || 'At Risk'} value={failCount} icon={AlertTriangle} color="rose" delay={6} />
       </div>
+
+      {/* Student Breakdown Section */}
+      <AnimatePresence>
+        {showStudentBreakdown && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-slate-50 dark:bg-slate-800/40 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-inner">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-lg">
+                  <Layers className="h-5 w-5" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Unique Students per Course</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {studentBreakdown.length > 0 ? (
+                  studentBreakdown.map((item, idx) => (
+                    <motion.div
+                      key={item.courseId}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center group hover:border-teal-300 dark:hover:border-teal-700 transition-colors"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider mb-1">{item.courseCode}</span>
+                        <span className="font-bold text-slate-800 dark:text-white line-clamp-1">{item.courseName}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-2xl font-black text-slate-900 dark:text-white">{item.count}</span>
+                        <span className="text-[10px] text-slate-500 uppercase font-bold">Students</span>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="col-span-full py-10 text-center text-slate-500 bg-white/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                    No student data available for courses yet.
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

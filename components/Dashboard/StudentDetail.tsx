@@ -120,36 +120,36 @@ const StudentDetail: React.FC = () => {
                 <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
 
                 <div className="relative p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="flex items-center gap-6">
-                        <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 shadow-inner flex items-center justify-center text-cyan-600 dark:text-cyan-400 text-3xl font-bold border-2 border-white dark:border-slate-700">
-                            {studentName.charAt(0)}
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                                    {studentName}
-                                </h1>
-                                <span className="px-3 py-1 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold font-mono text-slate-600 dark:text-slate-300">
-                                    {studentId}
-                                </span>
+                        <div className="flex-1">
+                            <button
+                                onClick={() => navigate('/faculty-dashboard/students')}
+                                className="flex items-center text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors mb-4 font-medium group"
+                            >
+                                <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+                                Back to Students
+                            </button>
+                            <div className="flex items-center gap-6">
+                                <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 shadow-inner flex items-center justify-center text-cyan-600 dark:text-cyan-400 text-3xl font-bold border-2 border-white dark:border-slate-700">
+                                    {studentName.charAt(0)}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                                            {studentName}
+                                        </h1>
+                                        <span className="px-3 py-1 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold font-mono text-slate-600 dark:text-slate-300">
+                                            {studentId}
+                                        </span>
+                                    </div>
+                                    <p className="text-lg text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                                        <GraduationCap className="h-5 w-5 text-cyan-500" />
+                                        Enrolled in <span className="font-bold text-slate-900 dark:text-white">{performances.length}</span> active courses
+                                    </p>
+                                </div>
                             </div>
-                            <p className="text-lg text-slate-600 dark:text-slate-400 flex items-center gap-2">
-                                <GraduationCap className="h-5 w-5 text-cyan-500" />
-                                Enrolled in <span className="font-bold text-slate-900 dark:text-white">{performances.length}</span> active courses
-                            </p>
                         </div>
                     </div>
-
-                    <Button
-                        variant="outline"
-                        onClick={() => navigate('/faculty-dashboard/students')}
-                        className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800"
-                    >
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Overview
-                    </Button>
                 </div>
-            </div>
 
             {/* Course Performance Cards */}
             <div className="space-y-8">
