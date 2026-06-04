@@ -65,7 +65,7 @@ Traditionally, grading hundreds of student scripts during midterm and final exam
 *   **Logical Modules**: `components/Dashboard/ExamManagement.tsx`, `components/Dashboard/CreateExamModal.tsx`, `components/Dashboard/ExamDetail.tsx`, `components/Dashboard/ExamCard.tsx`.
 *   **Exam Customization**:
     *   *Scheduling Controls*: Manages scheduling dates, durations, and locking options.
-    *   *Multimodal Model Answer Ingestion*: Instructors can configure model answers as Markdown texts, scanned reference images, or PDF keys.
+    *   *Model Answer Ingestion*: Instructors can configure model answers as Markdown texts, scanned reference images, or PDF keys.
     *   *Ingestion Monitoring Panel*: Displays lists of uploaded student scripts, processing states (`pending`, `processing`, `graded`), confidence logs, and final scores.
 
 ### 7. Scanned Script Ingestion & AI Evaluator
@@ -379,21 +379,66 @@ The following structured payload shows an expected response from the Gemini API:
   "studentName": "Bavly Hamdy",
   "studentId": "221165973",
   "grade": 13.5,
-  "confidence": 95,
+  "confidence": 0.95,
   "analysis": "The student has demonstrated a strong understanding of system software concepts, correctly defining operating systems and utility drivers. However, they partially missed the explanation of dynamic memory management, referring only to physical storage limitations rather than cache swapping policies.",
-  "matchedPoints": [
-    "Correctly defined operating systems and gave Windows as an example",
-    "Properly distinguished system software from application software"
-  ],
-  "missedPoints": [
-    "Failed to explain the role of virtual memory in dynamic scheduling allocations"
-  ]
+  "analyticalFeedback": {
+    "correctPoints": [
+      "Correctly defined operating systems and gave Windows as an example",
+      "Properly distinguished system software from application software"
+    ],
+    "missedPoints": [
+      "Failed to explain the role of virtual memory in dynamic scheduling allocations"
+    ]
+  }
 }
 ```
 
 ---
 
-## 6. Full Repository Directory Topology
+## 6. Asynchronous Cloudinary Storage Pipeline
+
+To avoid database size limitations and store binary data (student papers, answer key sheets, PDFs) securely away from Firestore, E-WIRRETN employs a dedicated Cloudinary integration.
+
+### Core Upload Implementation
+Both images and raw PDF files are uploaded using async `FormData` payloads sent to the Cloudinary REST API. Progress tracking is handled via `XMLHttpRequest` event listeners, communicating upload percentages back to the calling React UI state.
+
+```typescript
+export interface CloudinaryUploadResponse {
+  secure_url: string;   // HTTPS secure asset URL served via CDN
+  public_id: string;    // Cloudinary unique asset path identifier
+  format: string;       // File format extension (e.g. 'jpg', 'pdf')
+  width: number;        // Image width in pixels
+  height: number;       // Image height in pixels
+  bytes: number;        // File size in bytes
+  url: string;          // HTTP asset URL
+}
+```
+
+#### Upload Workflows
+1.  **Image Uploads (Answer Sheets)**: Images are posted to `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`.
+2.  **PDF/Raw Uploads (Model Answers)**: PDFs are uploaded as raw resources to `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload` with the `resource_type: 'raw'` parameter set in the upload configuration.
+
+---
+
+## 7. Document Exporter Service
+
+The `services/exportService.ts` module generates analytical reports locally in the browser, using two formatting paths:
+
+### 1. Excel Workbook Generation (`XLSX`)
+Generates dual-sheet spreadsheets containing student grade sheets and analytics summaries.
+*   **Sheet 1: Official Grade Report**: Contains course metadata header, exam titles, generation timestamps, and student tables listing Student ID, Full Name, Score, Percentage, Letter Grade, and Publishing Status. Column widths are dynamically sized to ensure visual formatting.
+*   **Sheet 2: Analytics Summary**: Formats metric parameters including total class size, pass rates, fail ratios, class averages, and extreme score bounds (highest/lowest scores).
+
+### 2. Official PDF Report Cards (`jsPDF` & `jspdf-autotable`)
+Generates printable, print-ready PDF reports with university formatting:
+*   **University Top Banner**: Renders a brand-colored violet rectangle (`#4c1d97`) containing report titles, institution headers (Faculty of Commerce - BIS Program), dates, and confidentiality markings.
+*   **Analytics Dashboard Badge**: A rounded rectangular info box summarizing key parameters (Total Students, Pass Rate, Average Score) with conditional coloring (green for pass rates >= 70%, red for lower performance).
+*   **Formatted AutoTable**: Renders student rosters with alternate row striping, explicit column width distributions, and color-coded grades (A in green, F in red).
+*   **Academic Signature Lines**: Automatically appends examiner and head-of-department signature lines at the document bottom, managing page breaks to prevent isolated overflow text.
+
+---
+
+## 8. Full Repository Directory Topology
 
 Below is the complete repository file structure of **E-WIRRETN**, detailing every major module, service, and layout component in the system:
 
@@ -452,7 +497,7 @@ BIS-Smart-Grader-V2-main/
 
 ---
 
-## 7. Security & Access Control Guardrails
+## 9. Security & Access Control Guardrails
 
 ### 1. Restricted Domain Authentication
 To protect academic grading integrity, account registration checks are enforced during authentication:
@@ -480,7 +525,7 @@ Security policies are declared in `firestore.rules` to enforce multi-tenant isol
 
 ---
 
-## 8. Local Quick-Start Guide
+## 10. Local Quick-Start Guide
 
 ### Prerequisites
 Ensure the following tools are installed on your development workstation:
