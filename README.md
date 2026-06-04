@@ -1,12 +1,12 @@
-# 🚀 BIS Smart Grader V2
+# 🚀 E-WIRRETN: BIS Smart Grader V2
 
 An enterprise-grade, AI-driven automated grading & assessment SaaS platform tailored for Business Information Systems (BIS) curriculums. The platform automates student answer sheet ingestion, extracts metadata, evaluates handwriting against multi-modal model answers, and aggregates visual academic analytics.
 
 ---
 
-## 1. Platform Vision & Exhaustive Features
+## 1. Platform Vision & Problem Statement
 
-### Deep-Dive Introduction
+### The Academic Challenge in BIS Curriculums
 The Business Information Systems (BIS) department at modern universities operates at the intersection of business intelligence, systems engineering, and management science. Managing courses within this curriculum requires a complex balance of quantitative testing (programming, database management, systems analysis) and qualitative analysis (business strategies, management theories, information systems auditing).
 
 Traditionally, grading hundreds of student scripts during midterm and final examination cycles introduces significant challenges:
@@ -14,40 +14,37 @@ Traditionally, grading hundreds of student scripts during midterm and final exam
 2.  **Grading Inconsistencies**: Evaluation criteria can fluctuate due to fatigue, leading to discrepancies across large student batches.
 3.  **Absence of Analytics**: Physical papers offer no data aggregation. Faculty members lack real-time visibility into performance curves, failure distributions, or concept mastery metrics, preventing immediate curriculum adjustments.
 
-**BIS Smart Grader V2** addresses these inefficiencies by combining state-of-the-art vision-based generative AI with a serverless, real-time SaaS platform. The system ingests scanned physical scripts, performs metadata extraction, grades handwriting against multi-modal references, and yields instant visual reports.
+### The E-WIRRETN Solution
+**E-WIRRETN** (also referred to as *E-Written* / *BIS Smart Grader V2*) resolves these administrative challenges by combining state-of-the-art vision-based generative AI with a serverless, real-time SaaS platform. The system ingests scanned physical scripts, performs metadata extraction, grades handwriting against multi-modal references, and yields instant visual reports.
 
 ---
 
-## 2. Exhaustive Feature Explanations
+## 2. Comprehensive System Features & Implementation Details
 
-### 1. Interactive Glassmorphic Landing Page
-*   **Engineering Objective**: High-conversion landing page designed to present the platform's features, capabilities, and system capabilities to new users.
-*   **Core Interfaces**: `components/LandingPage.tsx`, `components/Navbar.tsx`, `components/Hero.tsx`, `components/DemoSection.tsx`, `components/NewsCard.tsx`.
-*   **Key Capabilities**:
-    *   *Fluid Responsive Design*: Built with glassmorphism visual styling, harmonic gradients, and responsive Bento Grid structures.
-    *   *Interactive Demo Sandbox*: Allows visitors to view simulated inputs (student exam scans, model keys) and immediately see the generated OCR extraction and grading feedback.
-    *   *Unified Header/Footer Hooks*: Smooth scrolling navigation links, system status indicators, dynamic navigation wrappers, and scroll-to-top micro-interactions.
+### 1. Interactive Landing Page & Promotional Front-End
+*   **Logical Modules**: `components/LandingPage.tsx`, `components/Navbar.tsx`, `components/Hero.tsx`, `components/DemoSection.tsx`, `components/NewsCard.tsx`, `components/ScrollToTop.tsx`.
+*   **Visual Structure**:
+    *   *Glassmorphism & Gradients*: Leverages semi-transparent cards (`backdrop-blur-md bg-white/10`) with deep border contrast, soft shadows, and dynamic gradient backgrounds to give a premium SaaS feel.
+    *   *Interactive Demo Console*: A live simulator widget where users can click between mock handwritten answers and view how the AI extracts metadata (Student ID, Name) and scores them in real-time against model keys.
+    *   *Micro-interactions*: Driven by Framer Motion, page elements slide in on scroll, and buttons scale smoothly on hover/press.
 
 ### 2. University-Scoped Session Gateways
-*   **Engineering Objective**: Encrypted, multi-tenant portal restricting registration to valid institutional members while protecting dashboard access.
-*   **Core Interfaces**: `components/AuthPage.tsx`, `components/RequireAuth.tsx`.
-*   **Key Capabilities**:
-    *   *Domain Filtering Checks*: Enforces strict email verification constraints at the signup screen, restricting accounts to authorized educational emails (`*.edu.eg` or `*.aun.edu.eg`).
-    *   *Session Persistence*: Leverages Firebase Authentication state observers to persist authenticated states across client-side refreshes.
-    *   *Access Control Guard*: The `RequireAuth` component wraps private routes, validating active session tokens and redirecting unauthorized traffic to login.
+*   **Logical Modules**: `components/AuthPage.tsx`, `components/RequireAuth.tsx`.
+*   **Security Controls**:
+    *   *Email Suffix Whitelisting*: The registration controller validates that input emails end with `*.edu.eg` or `*.aun.edu.eg` before invoking Firebase Auth signup endpoints.
+    *   *Session Persistence*: Leverages Firebase Authentication state observers (`onAuthStateChanged`) to persist session states across client-side refreshes.
+    *   *Route Protection Guard*: The `RequireAuth` component wraps private routes, validating active session tokens and redirecting unauthorized traffic to login.
 
 ### 3. Multi-Tenant Navigation Drawer Shell
-*   **Engineering Objective**: Responsive side navigation frame coordinating layout preferences (theme, language) and serving real-time alerts.
-*   **Core Interfaces**: `components/Dashboard/DashboardLayout.tsx`, `services/notificationService.ts`.
-*   **Key Capabilities**:
+*   **Logical Modules**: `components/Dashboard/DashboardLayout.tsx`, `services/notificationService.ts`.
+*   **UI/UX Mechanics**:
     *   *RTL/LTR Translation Dictionary*: Synchronizes layout shifts with language preferences. Sidebars, grids, icons, and menus dynamically mirror structure when shifting Arabic/English locale states.
     *   *Realtime Alerts Counter*: Connects to Firestore notifications listener, displaying dynamic unread count badges over notifications icons.
     *   *Responsive Toggle Triggers*: Adapts layouts dynamically across mobile devices, tablets, and desktop dimensions.
 
 ### 4. Analytic Metrics Dashboard (Overview)
-*   **Engineering Objective**: Consolidated visual control center presenting aggregated metrics, grade trends, and action logs.
-*   **Core Interfaces**: `components/Dashboard/DashboardHome.tsx`, `components/Dashboard/ActionItemsPanel.tsx`, `components/Dashboard/GradeAnalytics.tsx`.
-*   **Key Capabilities**:
+*   **Logical Modules**: `components/Dashboard/DashboardHome.tsx`, `components/Dashboard/ActionItemsPanel.tsx`, `components/Dashboard/GradeAnalytics.tsx`.
+*   **Analytics Capabilities**:
     *   *KPI Counters Matrix*: Tracks overall registered courses counts, active student profiles, average graded scores, and assessment totals.
     *   *Dynamic Analytics Graphs*: Renders interactive SVG visual reports utilizing Recharts:
         *   `Performance Trend Curve`: Area graph rendering class average grade shifts across consecutive exam cycles.
@@ -58,40 +55,35 @@ Traditionally, grading hundreds of student scripts during midterm and final exam
         *   At-risk students profiling (scores dropping under 60%).
 
 ### 5. Curriculum & Grading Schemes Manager (My Courses)
-*   **Engineering Objective**: Course registry module coordinating credit hour allocations and customizing grading distributions.
-*   **Core Interfaces**: `components/Dashboard/CourseManagement.tsx`, `components/Dashboard/AddCourseModal.tsx`, `components/Dashboard/EditCourseModal.tsx`, `components/Dashboard/CourseDetail.tsx`, `components/Dashboard/CourseCard.tsx`.
-*   **Key Capabilities**:
+*   **Logical Modules**: `components/Dashboard/CourseManagement.tsx`, `components/Dashboard/AddCourseModal.tsx`, `components/Dashboard/EditCourseModal.tsx`, `components/Dashboard/CourseDetail.tsx`, `components/Dashboard/CourseCard.tsx`.
+*   **Academic Workflows**:
     *   *Dynamic Grading Schemes Editor*: Instructors can customize grade weights (Midterm %, Final %, Classwork %, Practical Labs %, Project %) totaling 100%. Ensures all assignments obey these schemas during grade compilation.
     *   *BIS Dynamic Syllabus Catalog*: Search-friendly autocompletion tool utilizing `utils/bisCurriculum.ts`, synchronizing metadata inputs with official Assiut University BIS Curriculum criteria (Course Code, Arabic Title, English Title, Weekly Lecture/Lab distribution).
     *   *Performance Roster*: Lists enrolled student profiles alongside course-specific averages and grade statistics.
 
 ### 6. Assessment & Model Answer Hub (Exams Manager)
-*   **Engineering Objective**: Module for managing exam specifications, scheduling, and model answers.
-*   **Core Interfaces**: `components/Dashboard/ExamManagement.tsx`, `components/Dashboard/CreateExamModal.tsx`, `components/Dashboard/ExamDetail.tsx`, `components/Dashboard/ExamCard.tsx`.
-*   **Key Capabilities**:
+*   **Logical Modules**: `components/Dashboard/ExamManagement.tsx`, `components/Dashboard/CreateExamModal.tsx`, `components/Dashboard/ExamDetail.tsx`, `components/Dashboard/ExamCard.tsx`.
+*   **Exam Customization**:
     *   *Scheduling Controls*: Manages scheduling dates, durations, and locking options.
     *   *Multimodal Model Answer Ingestion*: Instructors can configure model answers as Markdown texts, scanned reference images, or PDF keys.
     *   *Ingestion Monitoring Panel*: Displays lists of uploaded student scripts, processing states (`pending`, `processing`, `graded`), confidence logs, and final scores.
 
 ### 7. Scanned Script Ingestion & AI Evaluator
-*   **Engineering Objective**: Automation engine processing student hand-written papers, extracting details, and grading them against rubrics.
-*   **Core Interfaces**: `components/Dashboard/BulkUploadModal.tsx`, `services/geminiService.ts`, `services/cloudinaryService.ts`, `components/Dashboard/GradeDetailModal.tsx`.
-*   **Key Capabilities**:
+*   **Logical Modules**: `components/Dashboard/BulkUploadModal.tsx`, `services/geminiService.ts`, `services/cloudinaryService.ts`, `components/Dashboard/GradeDetailModal.tsx`.
+*   **Vision Processing pipeline**:
     *   *Cloudinary Asset Pipeline*: Processes scanned student papers, resizes image sizes (max width of `1024px`), and uploads them to the CDN.
     *   *Gemini Vision Ingestion*: Decouples grading request payloads to invoke the `gemini-2.5-flash` model under strict JSON schema options.
     *   *Grading Breakdown View*: Interactive overlay showing marked correct points, missed key concepts, AI confidence, and handwriting OCR validation checks.
 
 ### 8. Interactive Grade Ledger Spreadsheet
-*   **Engineering Objective**: Spreadsheet interface displaying student grades and supporting manual score edits.
-*   **Core Interfaces**: `components/Dashboard/GradeSheet.tsx`, `components/Dashboard/StudentList.tsx`, `components/Dashboard/StudentDetail.tsx`.
-*   **Key Capabilities**:
+*   **Logical Modules**: `components/Dashboard/GradeSheet.tsx`, `components/Dashboard/StudentList.tsx`, `components/Dashboard/StudentDetail.tsx`.
+*   **Data Aggregation**:
     *   *Real-time Grade Adjustment Ledger*: Cell-level modifications are saved directly to Firestore, recalculating class averages and standard distributions on the fly.
     *   *Roster Search Filters*: Autocomplete filtering inputs by Student ID, Student Name, Course, or Grade boundaries.
 
 ### 9. Multi-Format Academic Document Exporters
-*   **Engineering Objective**: Reporting tools compiling grading results to spreadsheet and PDF document formats.
-*   **Core Interfaces**: `services/exportService.ts`.
-*   **Key Capabilities**:
+*   **Logical Modules**: `services/exportService.ts`.
+*   **Report Generation**:
     *   *Analytical Excel Workbook*: Generates structured sheets containing student name lists, seat numbers, raw scores, letter boundaries, and class performance averages.
     *   *Official PDF Report Sheet*: Outputs printable PDF report sheets with school letterheads, course summaries, average marks, and grade curves.
 
@@ -151,7 +143,7 @@ The platform orchestrates image transformations, AI grading requests, and databa
 ```
 
 ### Detailed Lifecycle Steps
-1.  **Ingestion**: The instructor uploads a single sheet or batch upload zip of scanned student exam papers via the `BulkUploadModal` or `ExamDetail` components.
+1.  **Ingestion**: The instructor uploads scanned student exam papers via the `BulkUploadModal` or `ExamDetail` components.
 2.  **Asset Offloading**: The `cloudinaryService` receives the image files, uploads them to the Cloudinary CDN, and applies resizing logic to maintain a maximum width of `1024px` for optimal processing speed.
 3.  **AI Engine Invocation**: The `geminiService` is triggered, receiving the Cloudinary student image URL, the model answer data (text, PDF URL, or image URL), the maximum score, and the grading rubrics.
 4.  **Generative Assessment**: The Gemini model parses handwriting and compares it to the model answer, outputting structured grading results.
@@ -169,7 +161,7 @@ The application layout relies on three core global contexts operating in tandem 
 *   **`ToastContext`**: Provides non-blocking notifications, presenting visual feedback banners for database modifications, upload failures, and API status alerts.
 
 #### Realtime Firestore Synchronization (`onSnapshot`)
-Rather than relying on heavy client-side state managers like Redux or Zustand, which can lead to local state mismatch, overhead, and state drift from backend resources, BIS Smart Grader V2 leverages Firestore's native `onSnapshot` real-time listeners.
+Rather than relying on heavy client-side state managers like Redux or Zustand, which can lead to local state mismatch, overhead, and state drift from backend resources, E-WIRRETN leverages Firestore's native `onSnapshot` real-time listeners.
 
 This choice provides several architecture advantages:
 1.  **Immediate UI Updates**: Any update in the database (e.g., progress on batch grading) triggers immediate UI refreshes without polling.
@@ -403,7 +395,7 @@ The following structured payload shows an expected response from the Gemini API:
 
 ## 6. Full Repository Directory Topology
 
-Below is the complete repository file structure of **BIS Smart Grader V2**, detailing every major module, service, and layout component in the system:
+Below is the complete repository file structure of **E-WIRRETN**, detailing every major module, service, and layout component in the system:
 
 ```text
 BIS-Smart-Grader-V2-main/
@@ -532,4 +524,4 @@ The application will boot at `http://localhost:5173`.
 
 ---
 
-<sub>© 2026 Assiut University - BIS Department. All Rights Reserved. Fully localized supporting Arabic (RTL) & English (LTR).</sub>
+<sub>© 2026 Assiut University - BIS Department. All Rights Reserved. Fully localized supporting Arabic (RTL) & English (LTR). Project Title: E-WIRRETN.</sub>
