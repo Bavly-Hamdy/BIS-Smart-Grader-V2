@@ -381,10 +381,10 @@ const CourseManagement: React.FC = () => {
           <div className="flex items-center gap-1.5">
             {[
               { id: 'all', en: 'All Levels', ar: 'كل المستويات' },
-              { id: '1', en: 'Level 100', ar: 'المستوى الأول' },
-              { id: '2', en: 'Level 200', ar: 'المستوى الثاني' },
-              { id: '3', en: 'Level 300', ar: 'المستوى الثالث' },
-              { id: '4', en: 'Level 400', ar: 'المستوى الرابع' },
+              { id: '1', en: 'Level 1', ar: 'المستوى الأول' },
+              { id: '2', en: 'Level 2', ar: 'المستوى الثاني' },
+              { id: '3', en: 'Level 3', ar: 'المستوى الثالث' },
+              { id: '4', en: 'Level 4', ar: 'المستوى الرابع' },
             ].map(lvl => (
               <button
                 key={lvl.id}
