@@ -164,7 +164,7 @@ const CourseManagement: React.FC = () => {
       // 2. View Filter Match ('all' vs 'assigned')
       const matchesView = viewFilter === 'all' || assignedCourseIds.includes(course.code);
 
-      // 3. Level Filter Match (Level 100, 200, 300, 400)
+      // 3. Level Filter Match (Level 1, 2, 3, 4)
       const firstDigit = course.code.match(/\d/)?.[0];
       const matchesLevel = levelFilter === 'all' || firstDigit === levelFilter;
       
