@@ -108,7 +108,13 @@ const AuthPage: React.FC = () => {
         };
 
         await setDoc(doc(db, 'faculty', user.uid), userData);
-        navigate('/faculty-dashboard');
+        
+        // Sign out immediately so they have to login manually
+        await auth.signOut();
+        
+        setPassword('');
+        setMode('login');
+        setSuccess('Registration successful! Please sign in to access your dashboard.');
 
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
