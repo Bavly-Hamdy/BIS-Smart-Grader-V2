@@ -54,6 +54,10 @@ const ExamDetail: React.FC = () => {
     const [gradingProgress, setGradingProgress] = useState({ current: 0, total: 0 });
     const [gradingError, setGradingError] = useState<string | null>(null);
 
+    const gradingPercentage = gradingProgress.total > 0
+        ? Math.round((gradingProgress.current / gradingProgress.total) * 100)
+        : 0;
+
     useEffect(() => {
         if (examId) {
             fetchExamData();
@@ -302,8 +306,8 @@ const ExamDetail: React.FC = () => {
                         courseCode: exam.courseCode,
                         score: gradeData.grade,
                         maxScore: exam.totalMarks,
-                        percentage: (gradeData.grade / exam.totalMarks) * 100,
-                        letterGrade: calculateLetterGrade((gradeData.grade / exam.totalMarks) * 100),
+                        percentage: exam.totalMarks > 0 ? (gradeData.grade / exam.totalMarks) * 100 : 0,
+                        letterGrade: calculateLetterGrade(exam.totalMarks > 0 ? (gradeData.grade / exam.totalMarks) * 100 : 0),
                         status: 'draft',
                         gradedAt: new Date().toISOString(),
                         submissionId: studentSubmissions[0].id, // Reference the first submission doc
@@ -701,12 +705,12 @@ const ExamDetail: React.FC = () => {
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm mb-1">
                                     <span>{isRTL ? 'جاري التصحيح التلقائي...' : 'Grading in progress...'}</span>
-                                    <span>{Math.round((gradingProgress.current / gradingProgress.total) * 100)}%</span>
+                                    <span>{gradingPercentage}%</span>
                                 </div>
                                 <div className="w-full bg-indigo-900/50 rounded-full h-2.5 overflow-hidden">
                                     <div
                                         className="bg-white h-full rounded-full transition-all duration-300"
-                                        style={{ width: `${(gradingProgress.current / gradingProgress.total) * 100}%` }}
+                                        style={{ width: `${gradingPercentage}%` }}
                                     ></div>
                                 </div>
                                 <p className="text-xs text-indigo-200 mt-2 text-center">
