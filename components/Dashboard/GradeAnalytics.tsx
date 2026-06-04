@@ -130,33 +130,46 @@ const GradeAnalytics: React.FC<GradeAnalyticsProps> = ({ gradeSheet, uniqueKey }
                         {t('pass_rate_overview')}
                     </h3>
                 </div>
-                <div className="h-64 w-full relative" dir="ltr">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                            <Pie
-                                data={passFailData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={55}
-                                outerRadius={75}
-                                paddingAngle={5}
-                                dataKey="value"
-                            >
-                                {passFailData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS_PASS_FAIL[index % COLORS_PASS_FAIL.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip
-                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            />
-                            <Legend verticalAlign="bottom" height={36} />
-                        </PieChart>
-                    </ResponsiveContainer>
-                    {/* Centered Pass Rate */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none" dir={isRTL ? 'rtl' : 'ltr'}>
-                        <div className="text-center">
-                            <span className="text-2xl font-bold text-slate-900 dark:text-white">{gradeSheet.statistics.passRate}%</span>
-                            <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">{t('pass_rate')}</p>
+                <div className="h-72 w-full flex flex-col items-center justify-center relative" dir="ltr">
+                    <div className="bg-white/80 dark:bg-white/90 backdrop-blur-md border border-white shadow-lg shadow-slate-200/50 dark:shadow-none rounded-2xl p-6 flex flex-col items-center justify-center w-56 h-56 relative group hover:shadow-xl transition-all duration-300">
+                        <div className="w-36 h-36 relative">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                                    <Pie
+                                        data={passFailData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={50}
+                                        outerRadius={65}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                        className="overflow-visible"
+                                    >
+                                        {passFailData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS_PASS_FAIL[index % COLORS_PASS_FAIL.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                            {/* Centered Pass Rate */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" dir={isRTL ? 'rtl' : 'ltr'}>
+                                <span className="text-2xl font-bold text-slate-900 tracking-tight">{gradeSheet.statistics.passRate}%</span>
+                                <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-0.5">{t('pass_rate')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Custom Legend rendered below the white card */}
+                    <div className="flex justify-center gap-6 mt-4 text-xs font-semibold text-slate-600 dark:text-slate-400" dir={isRTL ? 'rtl' : 'ltr'}>
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></span>
+                            <span>{t('passed')}: {gradeSheet.statistics.passed}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#f43f5e]"></span>
+                            <span>{t('failed')}: {gradeSheet.statistics.failed}</span>
                         </div>
                     </div>
                 </div>

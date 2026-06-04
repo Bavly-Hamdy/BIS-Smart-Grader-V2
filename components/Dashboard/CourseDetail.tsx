@@ -317,36 +317,50 @@ const CourseDetail: React.FC = () => {
                 </div>
 
                 {/* Visualization */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col items-center">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 text-center">Visual Distribution</h3>
-                    <div className="w-full h-72 relative" dir="ltr">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RePieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
-                                <Pie
-                                    data={chartData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={70}
-                                    outerRadius={90}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                    cornerRadius={6}
-                                >
-                                    {chartData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                />
-                                <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-                            </RePieChart>
-                        </ResponsiveContainer>
+                    <div className="w-full flex flex-col items-center justify-center relative" dir="ltr">
+                        <div className="bg-white/80 dark:bg-white/90 backdrop-blur-md border border-white shadow-lg shadow-slate-200/50 dark:shadow-none rounded-2xl p-6 flex flex-col items-center justify-center w-56 h-56 relative group hover:shadow-xl transition-all duration-300">
+                            <div className="w-36 h-36 relative">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RePieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                                        <Pie
+                                            data={chartData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={50}
+                                            outerRadius={65}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            cornerRadius={6}
+                                            className="overflow-visible"
+                                        >
+                                            {chartData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        />
+                                    </RePieChart>
+                                </ResponsiveContainer>
 
-                        {/* Center Text */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" dir={isRTL ? 'rtl' : 'ltr'}>
-                            <span className="text-3xl font-bold text-slate-900 dark:text-white">100%</span>
-                            <span className="block text-xs uppercase tracking-wider text-slate-500 font-medium">Total</span>
+                                {/* Center Text */}
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" dir={isRTL ? 'rtl' : 'ltr'}>
+                                    <span className="text-3xl font-bold text-slate-900">100%</span>
+                                    <span className="block text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-0.5">Total</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Custom Legend */}
+                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-6 text-xs font-semibold text-slate-600 dark:text-slate-400" dir={isRTL ? 'rtl' : 'ltr'}>
+                            {chartData.map((entry, index) => (
+                                <div key={entry.name} className="flex items-center gap-1.5">
+                                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                                    <span>{entry.name}: {entry.value}%</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
