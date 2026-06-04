@@ -24,7 +24,8 @@ interface GradeAnalyticsProps {
 }
 
 const GradeAnalytics: React.FC<GradeAnalyticsProps> = ({ gradeSheet, uniqueKey }) => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const isRTL = language === 'ar';
 
     // 1. Prepare Data for Grade Distribution (A, B, C, D, F)
     const gradeDistributionData = useMemo(() => {
@@ -129,15 +130,15 @@ const GradeAnalytics: React.FC<GradeAnalyticsProps> = ({ gradeSheet, uniqueKey }
                         {t('pass_rate_overview')}
                     </h3>
                 </div>
-                <div className="h-64 w-full relative">
+                <div className="h-64 w-full relative" dir="ltr">
                     <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
+                        <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                             <Pie
                                 data={passFailData}
                                 cx="50%"
                                 cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
+                                innerRadius={55}
+                                outerRadius={75}
                                 paddingAngle={5}
                                 dataKey="value"
                             >
@@ -152,7 +153,7 @@ const GradeAnalytics: React.FC<GradeAnalyticsProps> = ({ gradeSheet, uniqueKey }
                         </PieChart>
                     </ResponsiveContainer>
                     {/* Centered Pass Rate */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none" dir={isRTL ? 'rtl' : 'ltr'}>
                         <div className="text-center">
                             <span className="text-2xl font-bold text-slate-900 dark:text-white">{gradeSheet.statistics.passRate}%</span>
                             <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">{t('pass_rate')}</p>

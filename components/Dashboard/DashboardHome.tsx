@@ -391,17 +391,17 @@ const DashboardHome: React.FC = () => {
               <p className="text-sm text-slate-500">{t('pass_fail_ratio')}</p>
             </div>
           </div>
-          <div className="h-72 flex items-center justify-center relative">
+          <div className="h-72 w-full flex items-center justify-center relative" dir="ltr">
             {grades.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                     <Pie
                       data={pieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={80}
-                      outerRadius={100}
+                      innerRadius={70}
+                      outerRadius={90}
                       paddingAngle={5}
                       dataKey="value"
                       cornerRadius={6}
@@ -413,7 +413,7 @@ const DashboardHome: React.FC = () => {
                     <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" dir={isRTL ? 'rtl' : 'ltr'}>
                   <span className="text-3xl font-bold text-slate-900 dark:text-white">
                     {((passCount / grades.length) * 100).toFixed(0)}%
                   </span>

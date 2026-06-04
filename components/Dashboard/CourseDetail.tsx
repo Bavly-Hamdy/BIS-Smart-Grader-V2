@@ -18,10 +18,13 @@ import autoTable from 'jspdf-autotable';
 import { motion } from 'framer-motion';
 import EditCourseModal from './EditCourseModal';
 import { Edit } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const CourseDetail: React.FC = () => {
     const { courseId } = useParams<{ courseId: string }>();
     const navigate = useNavigate();
+    const { language } = useLanguage();
+    const isRTL = language === 'ar';
     const [course, setCourse] = useState<Course | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -316,15 +319,15 @@ const CourseDetail: React.FC = () => {
                 {/* Visualization */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col">
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 text-center">Visual Distribution</h3>
-                    <div className="w-full h-72 relative">
+                    <div className="w-full h-72 relative" dir="ltr">
                         <ResponsiveContainer width="100%" height="100%">
-                            <RePieChart>
+                            <RePieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                                 <Pie
                                     data={chartData}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={80}
-                                    outerRadius={100}
+                                    innerRadius={70}
+                                    outerRadius={90}
                                     paddingAngle={5}
                                     dataKey="value"
                                     cornerRadius={6}
@@ -341,7 +344,7 @@ const CourseDetail: React.FC = () => {
                         </ResponsiveContainer>
 
                         {/* Center Text */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] text-center pointer-events-none">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" dir={isRTL ? 'rtl' : 'ltr'}>
                             <span className="text-3xl font-bold text-slate-900 dark:text-white">100%</span>
                             <span className="block text-xs uppercase tracking-wider text-slate-500 font-medium">Total</span>
                         </div>
