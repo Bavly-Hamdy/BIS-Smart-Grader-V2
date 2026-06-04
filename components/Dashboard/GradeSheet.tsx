@@ -352,7 +352,7 @@ const GradeSheetPage: React.FC = () => {
                 />
                 <StatCard
                     label={t('fail_rate')}
-                    value={`${(100 - stats.passRate).toFixed(1)}%`}
+                    value={`${stats.total > 0 ? (100 - stats.passRate).toFixed(1) : '0.0'}%`}
                     icon={XCircle}
                     trendLabel={`${stats.failed} ${t('failed_count')}`}
                     trendPositive={false}
