@@ -279,18 +279,18 @@ const ProfilePage: React.FC = () => {
                         {/* Edit Button */}
                         <div className="pt-2 flex flex-col items-end gap-3">
                             <Button
-                                variant="outline"
+                                variant="ghost"
                                 onClick={() => navigate('/faculty-dashboard')}
-                                className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 text-slate-600 group"
+                                className="bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 backdrop-blur-sm shadow-sm hover:shadow-md transition-all hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 group"
                             >
                                 <ArrowLeft className={`h-4 w-4 me-2 ${isRTL ? 'rotate-180 group-hover:translate-x-1' : 'group-hover:-translate-x-1'} transition-transform`} />
                                 {t('back_to_overview')}
                             </Button>
                             {!isEditing && (
                                 <Button
-                                    variant="outline"
+                                    variant="ghost"
                                     onClick={() => setIsEditing(true)}
-                                    className="bg-white dark:bg-slate-800 shadow-sm"
+                                    className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 shadow-sm"
                                 >
                                     <Edit2 className="h-4 w-4 me-2" />
                                     {t('edit_profile')}
@@ -435,7 +435,7 @@ const ProfilePage: React.FC = () => {
                                             variant="ghost"
                                             onClick={handleCancel}
                                             disabled={isSaving}
-                                            className="hover:bg-slate-100 dark:hover:bg-slate-800"
+                                            className="text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                                         >
                                             {t('cancel')}
                                         </Button>
