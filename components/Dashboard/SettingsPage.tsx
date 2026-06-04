@@ -31,7 +31,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const SettingsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { t, setLanguage, language } = useLanguage();
+    const { t, setLanguage, language, dir } = useLanguage();
+    const isRTL = language === 'ar';
     const { addToast } = useToast();
     const { theme, setTheme: setGlobalTheme } = useTheme();
     const [loading, setLoading] = useState(false);
@@ -114,7 +115,7 @@ const SettingsPage: React.FC = () => {
     const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
         setGlobalTheme(newTheme);
         saveSettings({ theme: newTheme });
-        addToast(`Theme set to ${newTheme}`, 'success');
+        addToast(t('theme_set_success').replace('{theme}', t(newTheme)), 'success');
     };
 
     const handleFontSizeChange = (newSize: 'small' | 'medium' | 'large') => {
@@ -122,21 +123,21 @@ const SettingsPage: React.FC = () => {
         localStorage.setItem('fontSize', newSize);
         applyFontSize(newSize);
         saveSettings({ fontSize: newSize });
-        addToast(`Font size updated`, 'success');
+        addToast(t('font_size_updated'), 'success');
     };
 
     const handleHighContrastChange = (val: boolean) => {
         setHighContrast(val);
         applyHighContrast(val);
         saveSettings({ highContrast: val });
-        addToast(val ? "High Contrast Enabled" : "High Contrast Disabled", 'info');
+        addToast(val ? t('high_contrast_enabled') : t('high_contrast_disabled'), 'info');
     };
 
     const handleReducedMotionChange = (val: boolean) => {
         setReducedMotion(val);
         applyReducedMotion(val);
         saveSettings({ reducedMotion: val });
-        addToast(val ? "Reduced Motion Enabled" : "Reduced Motion Disabled", 'info');
+        addToast(val ? t('reduced_motion_enabled') : t('reduced_motion_disabled'), 'info');
     };
 
     const handleNotificationChange = async (key: string) => {
@@ -145,22 +146,25 @@ const SettingsPage: React.FC = () => {
         // Real Browser Permission Request for Push
         if (key === 'push' && newVal === true) {
             if (!("Notification" in window)) {
-                addToast("This browser does not support desktop notifications", 'error');
+                addToast(t('browser_not_support_notifications'), 'error');
                 return;
             }
             const permission = await Notification.requestPermission();
             if (permission !== 'granted') {
-                addToast("Notification permission denied by user", 'warning');
+                addToast(t('notification_permission_denied'), 'warning');
                 newVal = false;
             } else {
-                addToast("Push notifications enabled!", 'success');
-                new Notification("Test Notification", {
-                    body: "Notifications are working!"
+                addToast(t('push_notifications_enabled'), 'success');
+                new Notification(t('test_notification_title'), {
+                    body: t('test_notification_body')
                 });
             }
         } else {
-            if (newVal) addToast(`${key === 'email' ? 'Email' : 'Push'} notifications enabled`, 'success');
-            else addToast(`${key === 'email' ? 'Email' : 'Push'} notifications disabled`, 'info');
+            if (newVal) {
+                addToast(key === 'email' ? t('email_notifications_enabled') : t('push_notifications_enabled'), 'success');
+            } else {
+                addToast(key === 'email' ? t('email_notifications_disabled') : t('push_notifications_disabled'), 'info');
+            }
         }
 
         const newNotifs = { ...notifications, [key]: newVal };
@@ -173,7 +177,7 @@ const SettingsPage: React.FC = () => {
         setLoading(true);
         try {
             await sendPasswordResetEmail(auth, auth.currentUser.email);
-            addToast(`Password reset link sent to ${auth.currentUser.email}`, 'success');
+            addToast(t('password_reset_sent').replace('{email}', auth.currentUser.email), 'success');
         } catch (error: any) {
             addToast(error.message, 'error');
         } finally {
@@ -189,20 +193,20 @@ const SettingsPage: React.FC = () => {
     ];
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 animate-fade-in pb-12">
+        <div className="max-w-7xl mx-auto space-y-8 animate-fade-in pb-12" dir={dir}>
 
             {/* Header Section with Gradient */}
             <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
+                <div className="absolute top-0 end-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -me-20 -mt-20 pointer-events-none"></div>
+                <div className="absolute bottom-0 start-0 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl -ms-20 -mb-20 pointer-events-none"></div>
 
                 <div className="relative p-8 md:p-10">
                     <button
                         onClick={() => navigate('/faculty-dashboard')}
                         className="flex items-center text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors mb-4 font-medium group"
                     >
-                        <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                        Back to Overview
+                        <ArrowLeft className={`h-4 w-4 me-2 ${isRTL ? 'rotate-180 group-hover:translate-x-1' : 'group-hover:-translate-x-1'} transition-transform`} />
+                        {t('back_to_overview')}
                     </button>
                     <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
                         {t('settings_title')}
@@ -235,7 +239,7 @@ const SettingsPage: React.FC = () => {
                             onClick={async () => {
                                 await signOut(auth);
                                 navigate('/login');
-                                addToast('Signed out successfully', 'info');
+                                addToast(t('sign_out_success'), 'info');
                             }}
                             className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-colors"
                         >
@@ -261,7 +265,7 @@ const SettingsPage: React.FC = () => {
                                         <div>
                                             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                                                 <Monitor className="h-6 w-6 text-indigo-500" />
-                                                Theme Preferences
+                                                {t('theme_preferences')}
                                             </h2>
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                 {[
@@ -278,7 +282,7 @@ const SettingsPage: React.FC = () => {
                                                             }`}
                                                     >
                                                         {theme === option.id && (
-                                                            <div className="absolute top-3 right-3 text-indigo-500">
+                                                            <div className="absolute top-3 end-3 text-indigo-500">
                                                                 <CheckCircle2 className="h-5 w-5" />
                                                             </div>
                                                         )}
@@ -294,15 +298,15 @@ const SettingsPage: React.FC = () => {
                                         <div>
                                             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                                                 <Eye className="h-6 w-6 text-purple-500" />
-                                                Accessibility
+                                                {t('accessibility')}
                                             </h2>
 
                                             <div className="space-y-6">
                                                 <div>
                                                     <div className="flex justify-between items-center mb-4">
-                                                        <label className="font-semibold text-slate-700 dark:text-slate-300">Interface Font Size</label>
+                                                        <label className="font-semibold text-slate-700 dark:text-slate-300">{t('interface_font_size')}</label>
                                                         <span className="text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded uppercase tracking-wider">
-                                                            {fontSize}
+                                                            {t(fontSize)}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl">
@@ -315,7 +319,7 @@ const SettingsPage: React.FC = () => {
                                                                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                                                     }`}
                                                             >
-                                                                {size === 'small' ? 'Compact' : size === 'medium' ? 'Default' : 'Comfortable'}
+                                                                {size === 'small' ? t('compact') : size === 'medium' ? t('default') : t('comfortable')}
                                                             </button>
                                                         ))}
                                                     </div>
@@ -324,27 +328,27 @@ const SettingsPage: React.FC = () => {
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                                                         <div>
-                                                            <h3 className="font-bold text-slate-900 dark:text-white">High Contrast</h3>
-                                                            <p className="text-sm text-slate-500 mt-0.5">Increase distinctness between elements</p>
+                                                            <h3 className="font-bold text-slate-900 dark:text-white">{t('high_contrast')}</h3>
+                                                            <p className="text-sm text-slate-500 mt-0.5">{t('high_contrast_desc')}</p>
                                                         </div>
                                                         <button
                                                             onClick={() => handleHighContrastChange(!highContrast)}
                                                             className={`w-14 h-8 rounded-full transition-all relative focus:outline-none ${highContrast ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'}`}
                                                         >
-                                                            <span className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${highContrast ? 'translate-x-6' : 'translate-x-0'}`} />
+                                                            <span className={`absolute top-1 start-1 w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${highContrast ? (isRTL ? '-translate-x-6' : 'translate-x-6') : 'translate-x-0'}`} />
                                                         </button>
                                                     </div>
 
                                                     <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
                                                         <div>
-                                                            <h3 className="font-bold text-slate-900 dark:text-white">Reduced Motion</h3>
-                                                            <p className="text-sm text-slate-500 mt-0.5">Minimize animations and movement</p>
+                                                            <h3 className="font-bold text-slate-900 dark:text-white">{t('reduced_motion')}</h3>
+                                                            <p className="text-sm text-slate-500 mt-0.5">{t('reduced_motion_desc')}</p>
                                                         </div>
                                                         <button
                                                             onClick={() => handleReducedMotionChange(!reducedMotion)}
                                                             className={`w-14 h-8 rounded-full transition-all relative focus:outline-none ${reducedMotion ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'}`}
                                                         >
-                                                            <span className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${reducedMotion ? 'translate-x-6' : 'translate-x-0'}`} />
+                                                            <span className={`absolute top-1 start-1 w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${reducedMotion ? (isRTL ? '-translate-x-6' : 'translate-x-6') : 'translate-x-0'}`} />
                                                         </button>
                                                     </div>
                                                 </div>
@@ -357,7 +361,7 @@ const SettingsPage: React.FC = () => {
                                     <div className="space-y-8">
                                         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                                             <Globe className="h-6 w-6 text-cyan-500" />
-                                            Language & Region
+                                            {t('language_region')}
                                         </h2>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -373,9 +377,9 @@ const SettingsPage: React.FC = () => {
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <span className="text-4xl shadow-sm rounded-full overflow-hidden border border-slate-100 dark:border-slate-700">🇺🇸</span>
-                                                    <div className="text-left">
+                                                    <div className="text-start">
                                                         <p className={`font-bold text-lg ${language === 'en' ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-900 dark:text-white'}`}>English</p>
-                                                        <p className="text-sm text-slate-500">United States</p>
+                                                        <p className="text-sm text-slate-500">{t('united_states')}</p>
                                                     </div>
                                                 </div>
                                                 {language === 'en' && <div className="h-6 w-6 rounded-full bg-indigo-500 flex items-center justify-center"><Check className="h-4 w-4 text-white" /></div>}
@@ -393,9 +397,9 @@ const SettingsPage: React.FC = () => {
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <span className="text-4xl shadow-sm rounded-full overflow-hidden border border-slate-100 dark:border-slate-700">🇪🇬</span>
-                                                    <div className="text-left">
+                                                    <div className="text-start">
                                                         <p className={`font-bold text-lg ${language === 'ar' ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-900 dark:text-white'}`}>العربية</p>
-                                                        <p className="text-sm text-slate-500">Egypt</p>
+                                                        <p className="text-sm text-slate-500">{t('egypt')}</p>
                                                     </div>
                                                 </div>
                                                 {language === 'ar' && <div className="h-6 w-6 rounded-full bg-indigo-500 flex items-center justify-center"><Check className="h-4 w-4 text-white" /></div>}
@@ -408,13 +412,13 @@ const SettingsPage: React.FC = () => {
                                     <div className="space-y-8">
                                         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                                             <Bell className="h-6 w-6 text-amber-500" />
-                                            Notification Preferences
+                                            {t('notification_preferences')}
                                         </h2>
 
                                         <div className="space-y-4">
                                             {[
-                                                { id: 'email', label: t('email_notifications'), desc: 'Receive daily summaries, grading reports, and important updates via email.' },
-                                                { id: 'push', label: t('push_notifications'), desc: 'Get real-time browser alerts for new submissions and system messages.' },
+                                                { id: 'email', label: t('email_notifications'), desc: t('email_notifications_desc') },
+                                                { id: 'push', label: t('push_notifications'), desc: t('push_notifications_desc') },
                                             ].map((item) => (
                                                 <div key={item.id} className="flex items-center justify-between p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                                                     <div>
@@ -425,7 +429,7 @@ const SettingsPage: React.FC = () => {
                                                         onClick={() => handleNotificationChange(item.id)}
                                                         className={`w-14 h-8 rounded-full transition-all relative focus:outline-none ${notifications[item.id as keyof typeof notifications] ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}
                                                     >
-                                                        <span className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${notifications[item.id as keyof typeof notifications] ? 'translate-x-6' : 'translate-x-0'}`} />
+                                                        <span className={`absolute top-1 start-1 w-6 h-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${notifications[item.id as keyof typeof notifications] ? (isRTL ? '-translate-x-6' : 'translate-x-6') : 'translate-x-0'}`} />
                                                     </button>
                                                 </div>
                                             ))}
@@ -437,7 +441,7 @@ const SettingsPage: React.FC = () => {
                                     <div className="space-y-8">
                                         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                                             <Shield className="h-6 w-6 text-emerald-500" />
-                                            Security Settings
+                                            {t('security_settings')}
                                         </h2>
 
                                         <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-100 dark:border-slate-800">
@@ -446,8 +450,8 @@ const SettingsPage: React.FC = () => {
                                                     <Lock className="h-6 w-6" />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <h3 className="font-bold text-slate-900 dark:text-white text-lg">Password & Authentication</h3>
-                                                    <p className="text-slate-500 mt-1">Manage your password and sign-in methods.</p>
+                                                    <h3 className="font-bold text-slate-900 dark:text-white text-lg">{t('password_auth')}</h3>
+                                                    <p className="text-slate-500 mt-1">{t('password_auth_desc')}</p>
 
                                                     <div className="mt-6">
                                                         <Button
@@ -455,11 +459,11 @@ const SettingsPage: React.FC = () => {
                                                             disabled={loading}
                                                             className="w-full sm:w-auto flex items-center justify-between gap-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm px-6 py-4 h-auto"
                                                         >
-                                                            <div className="text-left">
-                                                                <span className="block font-bold">Change Password</span>
-                                                                <span className="text-xs text-slate-400 font-normal">Send a reset link to your email</span>
+                                                            <div className="text-start">
+                                                                <span className="block font-bold">{t('change_password')}</span>
+                                                                <span className="text-xs text-slate-400 font-normal">{t('change_password_desc')}</span>
                                                             </div>
-                                                            {loading ? <Loader className="h-5 w-5 animate-spin text-indigo-500" /> : <ChevronRight className="h-5 w-5 text-slate-400" />}
+                                                            {loading ? <Loader className="h-5 w-5 animate-spin text-indigo-500" /> : <ChevronRight className={`h-5 w-5 text-slate-400 ${isRTL ? 'rotate-180' : ''}`} />}
                                                         </Button>
                                                     </div>
                                                 </div>

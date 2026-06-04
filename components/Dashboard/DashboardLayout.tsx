@@ -1,6 +1,4 @@
-
 import React, { useState, useEffect } from 'react';
-// @ts-ignore - fix for exported member error
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -14,13 +12,10 @@ import {
   Search,
   UserCircle,
   FileText,
-  GraduationCap,
-  User,
   Sun,
   Moon
 } from 'lucide-react';
 import { auth, db } from '../../firebase/firebaseConfig';
-// @ts-ignore - fix for exported member error
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -36,8 +31,11 @@ const DashboardLayout: React.FC = () => {
   const [facultyData, setFacultyData] = useState<FacultyProfile | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { theme, toggleTheme } = useTheme();
+  const { t, dir, language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isRTL = language === 'ar';
 
   useEffect(() => {
     fetchFacultyData();
@@ -45,8 +43,12 @@ const DashboardLayout: React.FC = () => {
   }, []);
 
   const loadNotifications = async () => {
-    const data = await fetchNotifications();
-    setNotifications(data);
+    try {
+      const data = await fetchNotifications();
+      setNotifications(data);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -69,8 +71,6 @@ const DashboardLayout: React.FC = () => {
     }
   };
 
-  const { t } = useLanguage();
-
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -80,20 +80,10 @@ const DashboardLayout: React.FC = () => {
     }
   };
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: t('overview'), path: '/faculty-dashboard' },
-    { icon: UserCircle, label: t('profile'), path: '/faculty-dashboard/profile' },
-    { icon: FileText, label: t('exams'), path: '/faculty-dashboard/exams' },
-    { icon: BookOpen, label: t('my_courses'), path: '/faculty-dashboard/courses' },
-    { icon: Users, label: t('students'), path: '/faculty-dashboard/students' },
-    { icon: Settings, label: t('settings'), path: '/faculty-dashboard/settings' },
-  ];
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">
-      {/* Sidebar for Desktop */}
-      {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 fixed inset-y-0 z-20 shadow-sm">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex" dir={dir}>
+      {/* Sidebar for Desktop - Uses logical border-e and start-0 layout mirroring */}
+      <aside className="hidden md:flex flex-col w-72 bg-white dark:bg-slate-900 border-e border-slate-200 dark:border-slate-800 fixed inset-y-0 start-0 z-20 shadow-sm">
         <div className="p-6">
           <div className="flex items-center gap-3 px-2">
             <div className="bg-gradient-to-tr from-primary to-blue-600 dark:from-blue-600 dark:to-blue-400 p-2.5 rounded-xl shadow-lg shadow-blue-500/20">
@@ -101,7 +91,9 @@ const DashboardLayout: React.FC = () => {
             </div>
             <div>
               <span className="font-bold text-xl text-slate-900 dark:text-white tracking-tight block">E-WRITTEN</span>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Faculty Space</span>
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
+                {t('faculty_space')}
+              </span>
             </div>
           </div>
         </div>
@@ -109,7 +101,9 @@ const DashboardLayout: React.FC = () => {
         <nav className="flex-1 px-4 py-4 space-y-8 overflow-y-auto custom-scrollbar">
           {/* Main Section */}
           <div>
-            <h3 className="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Main</h3>
+            <h3 className="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+              {t('main')}
+            </h3>
             <div className="space-y-1">
               <button
                 onClick={() => navigate('/faculty-dashboard')}
@@ -119,19 +113,21 @@ const DashboardLayout: React.FC = () => {
                   }`}
               >
                 <LayoutDashboard className={`h-5 w-5 ${location.pathname === '/faculty-dashboard' ? 'text-white' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300'}`} />
-                Overview
+                {t('overview')}
               </button>
             </div>
           </div>
 
           {/* Academic Section */}
           <div>
-            <h3 className="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Academic</h3>
+            <h3 className="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+              {t('academic')}
+            </h3>
             <div className="space-y-1">
               {[
-                { icon: FileText, label: 'Exams Manager', path: '/faculty-dashboard/exams' },
-                { icon: BookOpen, label: 'My Courses', path: '/faculty-dashboard/courses' },
-                { icon: Users, label: 'Students', path: '/faculty-dashboard/students' },
+                { icon: FileText, label: t('exams'), path: '/faculty-dashboard/exams' },
+                { icon: BookOpen, label: t('my_courses'), path: '/faculty-dashboard/courses' },
+                { icon: Users, label: t('students'), path: '/faculty-dashboard/students' },
               ].map((item) => (
                 <button
                   key={item.path}
@@ -150,11 +146,13 @@ const DashboardLayout: React.FC = () => {
 
           {/* Account Section */}
           <div>
-            <h3 className="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Account</h3>
+            <h3 className="px-4 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
+              {t('account')}
+            </h3>
             <div className="space-y-1">
               {[
-                { icon: UserCircle, label: 'My Profile', path: '/faculty-dashboard/profile' },
-                { icon: Settings, label: 'Settings', path: '/faculty-dashboard/settings' },
+                { icon: UserCircle, label: t('profile'), path: '/faculty-dashboard/profile' },
+                { icon: Settings, label: t('settings'), path: '/faculty-dashboard/settings' },
               ].map((item) => (
                 <button
                   key={item.path}
@@ -180,13 +178,13 @@ const DashboardLayout: React.FC = () => {
             <div className="bg-red-100 dark:bg-red-900/20 p-1.5 rounded-lg group-hover:bg-red-200 dark:group-hover:bg-red-900/40 transition-colors">
               <LogOut className="h-4 w-4" />
             </div>
-            Sign Out
+            {t('sign_out')}
           </button>
         </div>
       </aside>
 
-      {/* Mobile Header & Sidebar Overlay */}
-      <div className="flex-1 flex flex-col md:ml-72 transition-all duration-300">
+      {/* Main Content container - offset dynamically via logical md:ms-72 */}
+      <div className="flex-1 flex flex-col md:ms-72 transition-all duration-300">
         <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 sticky top-0 z-10">
           <button
             className="md:hidden p-2 text-slate-600 dark:text-slate-300"
@@ -196,11 +194,13 @@ const DashboardLayout: React.FC = () => {
           </button>
 
           <div className="flex-1 max-w-md mx-4 hidden sm:block relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400`} />
             <input
               type="text"
-              placeholder="Search courses or students..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none text-slate-900 dark:text-white"
+              placeholder={isRTL ? 'بحث بالمواد أو الطلاب...' : 'Search courses or students...'}
+              className={`w-full py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none text-slate-900 dark:text-white ${
+                isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'
+              }`}
             />
           </div>
 
@@ -222,7 +222,7 @@ const DashboardLayout: React.FC = () => {
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse"></span>
+                  <span className={`absolute top-2 ${isRTL ? 'left-2' : 'right-2'} h-2 w-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse`}></span>
                 )}
               </button>
 
@@ -238,12 +238,12 @@ const DashboardLayout: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-40 overflow-hidden"
+                      className={`absolute ${isRTL ? 'left-0' : 'right-0'} mt-2 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-40 overflow-hidden`}
                     >
                       <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                        <h3 className="font-semibold text-slate-900 dark:text-white">Notifications</h3>
+                        <h3 className="font-semibold text-slate-900 dark:text-white">{isRTL ? 'الإشعارات' : 'Notifications'}</h3>
                         <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-full">
-                          {unreadCount} New
+                          {unreadCount} {isRTL ? 'جديد' : 'New'}
                         </span>
                       </div>
 
@@ -251,7 +251,7 @@ const DashboardLayout: React.FC = () => {
                         {notifications.length === 0 ? (
                           <div className="p-8 text-center text-slate-500 dark:text-slate-400">
                             <Bell className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                            <p className="text-sm">No new notifications</p>
+                            <p className="text-sm">{isRTL ? 'لا توجد إشعارات جديدة' : 'No new notifications'}</p>
                           </div>
                         ) : (
                           notifications.map((notification) => (
@@ -261,7 +261,7 @@ const DashboardLayout: React.FC = () => {
                                 setIsNotificationsOpen(false);
                                 if (notification.link) navigate(notification.link);
                               }}
-                              className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-50 dark:border-slate-800/50 last:border-0 transition-colors flex items-start gap-3"
+                              className={`w-full text-start px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-50 dark:border-slate-800/50 last:border-0 transition-colors flex items-start gap-3`}
                             >
                               <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${notification.type === 'alert' ? 'bg-red-500' :
                                 notification.type === 'success' ? 'bg-green-500' :
@@ -270,8 +270,8 @@ const DashboardLayout: React.FC = () => {
                               <div>
                                 <p className="text-sm font-medium text-slate-900 dark:text-white line-clamp-1">{notification.title}</p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{notification.message}</p>
-                                <p className="text-[10px] text-slate-400 mt-1.5">
-                                  {new Date(notification.timestamp).toLocaleDateString()}
+                                <p className="text-[10px] text-slate-400 mt-1.5 font-mono">
+                                  {new Date(notification.timestamp).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
                                 </p>
                               </div>
                             </button>
@@ -282,9 +282,9 @@ const DashboardLayout: React.FC = () => {
                       <div className="p-2 border-t border-slate-100 dark:border-slate-800 text-center">
                         <button
                           onClick={markAllAsRead}
-                          className="text-xs text-primary dark:text-blue-400 font-medium hover:underline"
+                          className="text-xs text-primary dark:text-blue-400 font-semibold hover:underline"
                         >
-                          Mark all as read
+                          {isRTL ? 'تحديد الكل كمقروء' : 'Mark all as read'}
                         </button>
                       </div>
                     </motion.div>
@@ -292,6 +292,7 @@ const DashboardLayout: React.FC = () => {
                 )}
               </AnimatePresence>
             </div>
+
             {/* Profile Menu Dropdown */}
             <div className="relative">
               <button
@@ -301,9 +302,9 @@ const DashboardLayout: React.FC = () => {
                 <div className="h-8 w-8 bg-gradient-to-tr from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold text-sm">
                   {facultyData?.fullName?.charAt(0).toUpperCase() || 'DR'}
                 </div>
-                <div className="hidden lg:block text-left">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">{facultyData?.fullName || 'Loading...'}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{facultyData?.academicRank || ''}</p>
+                <div className="hidden lg:block text-start">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white leading-none mb-1">{facultyData?.fullName || 'Loading...'}</p>
+                  <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 leading-none">{facultyData?.academicRank || ''}</p>
                 </div>
               </button>
 
@@ -319,9 +320,9 @@ const DashboardLayout: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-40"
+                      className={`absolute ${isRTL ? 'left-0' : 'right-0'} mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-40`}
                     >
-                      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 mb-1">
+                      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 mb-1 text-start">
                         <p className="text-sm font-semibold text-slate-900 dark:text-white">
                           {facultyData?.fullName || 'Faculty Member'}
                         </p>
@@ -335,10 +336,10 @@ const DashboardLayout: React.FC = () => {
                           navigate('/faculty-dashboard/profile');
                           setIsProfileMenuOpen(false);
                         }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                        className="w-full text-start px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
                       >
                         <UserCircle className="h-4 w-4" />
-                        Manage Account
+                        {isRTL ? 'إدارة الحساب' : 'Manage Account'}
                       </button>
 
                       <button
@@ -346,23 +347,23 @@ const DashboardLayout: React.FC = () => {
                           navigate('/faculty-dashboard/settings');
                           setIsProfileMenuOpen(false);
                         }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                        className="w-full text-start px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
                       >
                         <Settings className="h-4 w-4" />
-                        Settings
+                        {isRTL ? 'الإعدادات' : 'Settings'}
                       </button>
 
-                      <div className="h-px bg-slate-100 dark:bg-slate-800 my-1 confirm-logout-separator"></div>
+                      <div className="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
 
                       <button
                         onClick={() => {
                           handleLogout();
                           setIsProfileMenuOpen(false);
                         }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2 transition-colors"
+                        className="w-full text-start px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2 transition-colors font-semibold"
                       >
                         <LogOut className="h-4 w-4" />
-                        Log Out
+                        {isRTL ? 'تسجيل الخروج' : 'Log Out'}
                       </button>
                     </motion.div>
                   </>
@@ -384,10 +385,10 @@ const DashboardLayout: React.FC = () => {
                 onClick={() => setSidebarOpen(false)}
               />
               <motion.aside
-                initial={{ x: -280 }}
+                initial={{ x: isRTL ? 280 : -280 }}
                 animate={{ x: 0 }}
-                exit={{ x: -280 }}
-                className="fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-900 z-50 md:hidden flex flex-col"
+                exit={{ x: isRTL ? 280 : -280 }}
+                className={`fixed inset-y-0 ${isRTL ? 'right-0' : 'left-0'} w-72 bg-white dark:bg-slate-900 z-50 md:hidden flex flex-col`}
               >
                 <div className="p-6 flex justify-between items-center border-b border-slate-200 dark:border-slate-800">
                   <span className="font-bold text-lg text-slate-900 dark:text-white">E-WRITTEN</span>
@@ -396,17 +397,38 @@ const DashboardLayout: React.FC = () => {
                   </button>
                 </div>
                 <nav className="flex-1 p-4 space-y-2">
-                  {menuItems.map((item) => (
+                  <button
+                    onClick={() => {
+                      navigate('/faculty-dashboard');
+                      setSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors text-start ${
+                      location.pathname === '/faculty-dashboard'
+                        ? 'bg-primary/5 text-primary dark:bg-blue-900/20 dark:text-blue-400'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <LayoutDashboard className="h-5 w-5" />
+                    {t('overview')}
+                  </button>
+                  {[
+                    { icon: FileText, label: t('exams'), path: '/faculty-dashboard/exams' },
+                    { icon: BookOpen, label: t('my_courses'), path: '/faculty-dashboard/courses' },
+                    { icon: Users, label: t('students'), path: '/faculty-dashboard/students' },
+                    { icon: UserCircle, label: t('profile'), path: '/faculty-dashboard/profile' },
+                    { icon: Settings, label: t('settings'), path: '/faculty-dashboard/settings' },
+                  ].map((item) => (
                     <button
                       key={item.path}
                       onClick={() => {
                         navigate(item.path);
                         setSidebarOpen(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${location.pathname === item.path
-                        ? 'bg-primary/5 text-primary dark:bg-blue-900/20 dark:text-blue-400'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                        }`}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors text-start ${
+                        location.pathname.startsWith(item.path)
+                          ? 'bg-primary/5 text-primary dark:bg-blue-900/20 dark:text-blue-400'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      }`}
                     >
                       <item.icon className="h-5 w-5" />
                       {item.label}
@@ -422,8 +444,8 @@ const DashboardLayout: React.FC = () => {
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">
           <Outlet />
         </main>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };
 

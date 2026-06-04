@@ -13,10 +13,13 @@ import { FacultyProfile } from '../../types';
 import { uploadImageToCloudinary } from '../../services/cloudinaryService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../../context/ToastContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ProfilePage: React.FC = () => {
     const navigate = useNavigate();
     const { addToast } = useToast();
+    const { t, language, dir } = useLanguage();
+    const isRTL = language === 'ar';
     const [profile, setProfile] = useState<FacultyProfile | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +35,29 @@ const ProfilePage: React.FC = () => {
     const [courseCount, setCourseCount] = useState(0);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const getMemberSinceYear = () => {
+        if (!profile || !profile.createdAt) return '2026';
+        try {
+            // Handle Firestore Timestamp structure
+            const val = profile.createdAt as any;
+            if (val && typeof val === 'object') {
+                if (typeof val.toDate === 'function') {
+                    return val.toDate().getFullYear().toString();
+                } else if (val.seconds) {
+                    return new Date(val.seconds * 1000).getFullYear().toString();
+                }
+            }
+            // Handle ISO string or number
+            const date = new Date(profile.createdAt);
+            if (!isNaN(date.getTime())) {
+                return date.getFullYear().toString();
+            }
+        } catch (e) {
+            console.error('Error parsing profile.createdAt:', e);
+        }
+        return '2026';
+    };
 
     useEffect(() => {
         fetchProfile();
@@ -63,7 +89,7 @@ const ProfilePage: React.FC = () => {
 
         } catch (err) {
             console.error('Error fetching profile:', err);
-            addToast('Error loading profile data', 'error');
+            addToast(t('error_loading_profile'), 'error');
         } finally {
             setIsLoading(false);
         }
@@ -83,12 +109,12 @@ const ProfilePage: React.FC = () => {
                 updatedAt: new Date().toISOString()
             });
 
-            addToast('Profile updated successfully', 'success');
+            addToast(t('profile_updated_success'), 'success');
             setIsEditing(false);
             await fetchProfile(); // Refresh data
         } catch (err) {
             console.error('Error updating profile:', err);
-            addToast('Failed to save changes', 'error');
+            addToast(t('failed_save_changes'), 'error');
         } finally {
             setIsSaving(false);
         }
@@ -109,10 +135,10 @@ const ProfilePage: React.FC = () => {
             });
 
             setProfile(prev => prev ? { ...prev, photoUrl: result.secure_url } : null);
-            addToast('Profile photo updated', 'success');
+            addToast(t('photo_updated_success'), 'success');
         } catch (error) {
             console.error('Error uploading photo:', error);
-            addToast('Failed to upload photo', 'error');
+            addToast(t('failed_upload_photo'), 'error');
         } finally {
             setIsUploadingPhoto(false);
         }
@@ -122,7 +148,7 @@ const ProfilePage: React.FC = () => {
         e.stopPropagation(); // Prevent triggering the parent's onClick (e.g., change photo)
         if (!profile || !profile.photoUrl) return;
 
-        if (!window.confirm('Are you sure you want to remove your profile photo?')) return;
+        if (!window.confirm(t('remove_photo_confirm'))) return;
 
         try {
             await updateDoc(doc(db, 'faculty', profile.uid), {
@@ -137,10 +163,10 @@ const ProfilePage: React.FC = () => {
                 return updated;
             });
 
-            addToast('Profile photo removed', 'success');
+            addToast(t('photo_removed_success'), 'success');
         } catch (error) {
             console.error('Error deleting photo:', error);
-            addToast('Failed to remove photo', 'error');
+            addToast(t('failed_remove_photo'), 'error');
         }
     };
 
@@ -165,12 +191,12 @@ const ProfilePage: React.FC = () => {
     if (!profile) return null;
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 pb-12 animate-fade-in">
+        <div className="max-w-7xl mx-auto space-y-8 pb-12 animate-fade-in" dir={dir}>
 
             {/* Header Section with Gradient */}
             <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl -ml-20 -mb-20 pointer-events-none"></div>
+                <div className="absolute top-0 end-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -me-20 -mt-20 pointer-events-none"></div>
+                <div className="absolute bottom-0 start-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl -ms-20 -mb-20 pointer-events-none"></div>
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 opacity-50"></div>
 
                 <div className="relative p-8 md:p-10">
@@ -193,7 +219,7 @@ const ProfilePage: React.FC = () => {
                                         className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer backdrop-blur-[1px]"
                                     >
                                         <Camera className="h-8 w-8 text-white mb-1" />
-                                        <span className="text-xs font-medium text-white">Change</span>
+                                        <span className="text-xs font-medium text-white">{t('change_avatar')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -202,8 +228,8 @@ const ProfilePage: React.FC = () => {
                             {profile.photoUrl && (
                                 <button
                                     onClick={handleDeletePhoto}
-                                    className="absolute bottom-1 right-1 p-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity scale-75 md:scale-90"
-                                    title="Remove Photo"
+                                    className="absolute bottom-1 end-1 p-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity scale-75 md:scale-90"
+                                    title={t('remove_photo')}
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </button>
@@ -224,10 +250,10 @@ const ProfilePage: React.FC = () => {
                         </div>
 
                         {/* Info Section */}
-                        <div className="flex-1 text-center md:text-left space-y-2 pt-2">
+                        <div className="flex-1 text-center md:text-start space-y-2 pt-2">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">
                                 <Award className="h-3.5 w-3.5" />
-                                {profile.academicRank}
+                                {t(profile.academicRank)}
                             </div>
 
                             <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -241,7 +267,7 @@ const ProfilePage: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <MapPin className="h-4 w-4" />
-                                    <span>Faculty of BIS</span>
+                                    <span>{t('faculty_of_bis')}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <Mail className="h-4 w-4" />
@@ -255,10 +281,10 @@ const ProfilePage: React.FC = () => {
                             <Button
                                 variant="outline"
                                 onClick={() => navigate('/faculty-dashboard')}
-                                className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 text-slate-600"
+                                className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 text-slate-600 group"
                             >
-                                <ArrowLeft className="h-4 w-4 mr-2" />
-                                Back to Overview
+                                <ArrowLeft className={`h-4 w-4 me-2 ${isRTL ? 'rotate-180 group-hover:translate-x-1' : 'group-hover:-translate-x-1'} transition-transform`} />
+                                {t('back_to_overview')}
                             </Button>
                             {!isEditing && (
                                 <Button
@@ -266,8 +292,8 @@ const ProfilePage: React.FC = () => {
                                     onClick={() => setIsEditing(true)}
                                     className="bg-white dark:bg-slate-800 shadow-sm"
                                 >
-                                    <Edit2 className="h-4 w-4 mr-2" />
-                                    Edit Profile
+                                    <Edit2 className="h-4 w-4 me-2" />
+                                    {t('edit_profile')}
                                 </Button>
                             )}
                         </div>
@@ -283,7 +309,7 @@ const ProfilePage: React.FC = () => {
                     <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
                         <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                            Account Status
+                            {t('account_status')}
                         </h3>
                         <div className="space-y-4">
                             <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
@@ -291,7 +317,7 @@ const ProfilePage: React.FC = () => {
                                     <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
                                         <BookOpen className="h-5 w-5" />
                                     </div>
-                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Courses</span>
+                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{t('total_courses')}</span>
                                 </div>
                                 <span className="text-xl font-bold text-slate-900 dark:text-white">{courseCount}</span>
                             </div>
@@ -301,9 +327,9 @@ const ProfilePage: React.FC = () => {
                                     <div className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg">
                                         <Calendar className="h-5 w-5" />
                                     </div>
-                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Member Since</span>
+                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{t('member_since')}</span>
                                 </div>
-                                <span className="text-xl font-bold text-slate-900 dark:text-white">{new Date(profile.createdAt).getFullYear()}</span>
+                                <span className="text-xl font-bold text-slate-900 dark:text-white">{getMemberSinceYear()}</span>
                             </div>
                         </div>
                     </div>
@@ -318,10 +344,10 @@ const ProfilePage: React.FC = () => {
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/20">
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                 <User className="h-5 w-5 text-blue-500" />
-                                Personal Information
+                                {t('personal_information')}
                             </h2>
                             <p className="text-sm text-slate-500 mt-1">
-                                {isEditing ? "Update your details below." : "Your personal and academic details."}
+                                {isEditing ? t('update_details_subtitle') : t('personal_info_subtitle')}
                             </p>
                         </div>
 
@@ -329,69 +355,69 @@ const ProfilePage: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
                                 {/* Form Fields */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Full Name</label>
+                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('full_name')}</label>
                                     <div className="relative">
                                         <input
                                             type="text"
                                             disabled={!isEditing}
                                             value={fullName}
                                             onChange={(e) => setFullName(e.target.value)}
-                                            className={`w-full pl-4 pr-4 py-3 rounded-xl border transition-all outline-none ${isEditing
+                                            className={`w-full py-3 rounded-xl border transition-all outline-none ${isEditing
                                                     ? 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'
                                                     : 'bg-slate-50 dark:bg-slate-800/50 border-transparent text-slate-500 dark:text-slate-400 cursor-not-allowed'
-                                                }`}
+                                                } ps-4 pe-4`}
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Department</label>
+                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('department')}</label>
                                     <input
                                         type="text"
                                         disabled={!isEditing}
                                         value={department}
                                         onChange={(e) => setDepartment(e.target.value)}
-                                        className={`w-full pl-4 pr-4 py-3 rounded-xl border transition-all outline-none ${isEditing
+                                        className={`w-full py-3 rounded-xl border transition-all outline-none ${isEditing
                                                 ? 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'
                                                 : 'bg-slate-50 dark:bg-slate-800/50 border-transparent text-slate-500 dark:text-slate-400 cursor-not-allowed'
-                                            }`}
+                                            } ps-4 pe-4`}
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Academic Rank</label>
+                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('academic_rank')}</label>
                                     <div className="relative">
                                         {isEditing ? (
                                             <select
                                                 value={academicRank}
                                                 onChange={(e) => setAcademicRank(e.target.value)}
-                                                className="w-full pl-4 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none"
+                                                className="w-full py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none ps-4 pe-10"
                                             >
-                                                <option value="Professor">Professor</option>
-                                                <option value="Associate Professor">Associate Professor</option>
-                                                <option value="Assistant Professor">Assistant Professor</option>
-                                                <option value="Lecturer">Lecturer</option>
-                                                <option value="Teaching Assistant">Teaching Assistant</option>
+                                                <option value="Professor">{t('Professor')}</option>
+                                                <option value="Associate Professor">{t('Associate Professor')}</option>
+                                                <option value="Assistant Professor">{t('Assistant Professor')}</option>
+                                                <option value="Lecturer">{t('Lecturer')}</option>
+                                                <option value="Teaching Assistant">{t('Teaching Assistant')}</option>
                                             </select>
                                         ) : (
-                                            <div className="w-full pl-4 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-transparent text-slate-500 dark:text-slate-400 cursor-not-allowed">
-                                                {academicRank}
+                                            <div className="w-full py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-transparent text-slate-500 dark:text-slate-400 cursor-not-allowed ps-4 pe-4">
+                                                {t(academicRank)}
                                             </div>
                                         )}
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Specialization</label>
+                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('specialization')}</label>
                                     <input
                                         type="text"
                                         disabled={!isEditing}
                                         value={specialization}
                                         onChange={(e) => setSpecialization(e.target.value)}
-                                        className={`w-full pl-4 pr-4 py-3 rounded-xl border transition-all outline-none ${isEditing
+                                        className={`w-full py-3 rounded-xl border transition-all outline-none ${isEditing
                                                 ? 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'
                                                 : 'bg-slate-50 dark:bg-slate-800/50 border-transparent text-slate-500 dark:text-slate-400 cursor-not-allowed'
-                                            }`}
+                                            } ps-4 pe-4`}
                                     />
                                 </div>
                             </div>
@@ -411,15 +437,15 @@ const ProfilePage: React.FC = () => {
                                             disabled={isSaving}
                                             className="hover:bg-slate-100 dark:hover:bg-slate-800"
                                         >
-                                            Cancel
+                                            {t('cancel')}
                                         </Button>
                                         <Button
                                             onClick={handleSave}
                                             isLoading={isSaving}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 px-6"
+                                            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 px-6 flex items-center"
                                         >
-                                            <Save className="h-4 w-4 mr-2" />
-                                            Save Changes
+                                            <Save className="h-4 w-4 me-2" />
+                                            {t('save_changes')}
                                         </Button>
                                     </motion.div>
                                 )}

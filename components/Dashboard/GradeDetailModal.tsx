@@ -6,6 +6,7 @@ import { Grade, StudentSubmission } from '../../types';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import Button from '../Button';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface GradeDetailModalProps {
     isOpen: boolean;
@@ -17,6 +18,8 @@ interface GradeDetailModalProps {
 }
 
 const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, grade, modelAnswerText, modelAnswerPdfUrl, onGradeUpdated }) => {
+    const { t, language, dir } = useLanguage();
+    const isRTL = language === 'ar';
     const [activeTab, setActiveTab] = useState<'analysis' | 'paper'>('analysis');
     const [submission, setSubmission] = useState<StudentSubmission | null>(null);
     const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
@@ -100,7 +103,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
             if (onGradeUpdated) onGradeUpdated();
         } catch (error) {
             console.error('Error updating score:', error);
-            alert('Failed to update score.');
+            alert(t('failed_to_update_score'));
         } finally {
             setIsSavingScore(false);
         }
@@ -127,7 +130,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
             if (onGradeUpdated) onGradeUpdated();
         } catch (error) {
             console.error('Error updating student details:', error);
-            alert('Failed to update student details.');
+            alert(t('failed_to_update_details'));
         } finally {
             setIsSavingDetails(false);
         }
@@ -154,6 +157,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
                     className="relative w-full max-w-5xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                    dir={dir}
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-10">
@@ -167,7 +171,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                                 value={editedName}
                                                 onChange={(e) => setEditedName(e.target.value)}
                                                 className="w-full px-3 py-2 text-lg font-bold border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                                                placeholder="Student Name"
+                                                placeholder={t('student_name')}
                                             />
                                         </div>
                                         <div className="relative w-full sm:w-48">
@@ -176,7 +180,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                                 value={editedId}
                                                 onChange={(e) => setEditedId(e.target.value)}
                                                 className="w-full px-3 py-2 text-sm font-medium border border-slate-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                                                placeholder="Student ID"
+                                                placeholder={t('student_id')}
                                             />
                                         </div>
                                         <div className="flex gap-2">
@@ -184,7 +188,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                                 onClick={handleSaveDetails} 
                                                 disabled={isSavingDetails}
                                                 className="p-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl transition-colors shadow-sm"
-                                                title="Save Details"
+                                                title={t('save_details')}
                                             >
                                                 <Save className="h-5 w-5" />
                                             </button>
@@ -195,7 +199,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                                     setEditedId(grade.studentId); 
                                                 }}
                                                 className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
-                                                title="Cancel"
+                                                title={t('cancel')}
                                             >
                                                 <X className="h-5 w-5" />
                                             </button>
@@ -212,7 +216,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                         <button 
                                             onClick={() => setIsEditingDetails(true)}
                                             className="text-slate-400 hover:text-indigo-600 transition-colors p-1"
-                                            title="Edit Student Details"
+                                            title={t('edit_student_details')}
                                         >
                                             <Edit2 className="h-4 w-4" />
                                         </button>
@@ -256,14 +260,14 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                         <button 
                                             onClick={() => setIsEditingScore(true)}
                                             className="text-slate-400 hover:text-primary transition-colors p-1"
-                                            title="Edit AI Grade"
+                                            title={t('edit_ai_grade')}
                                         >
                                             <Edit2 className="h-4 w-4" />
                                         </button>
                                     </div>
                                 )}
                                 <div className="text-sm text-slate-500 font-medium">
-                                    Grade: {grade.letterGrade} ({grade.percentage.toFixed(1)}%)
+                                    {t('grade_label')}: {grade.letterGrade} ({grade.percentage.toFixed(1)}%)
                                 </div>
                             </div>
                             <button
@@ -285,7 +289,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                 }`}
                         >
                             <AlertCircle className="h-4 w-4" />
-                            AI Analysis & Insights
+                            {t('ai_analysis_insights')}
                         </button>
                         <button
                             onClick={() => setActiveTab('paper')}
@@ -295,7 +299,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                 }`}
                         >
                             <FileText className="h-4 w-4" />
-                            Paper vs Model Answer
+                            {t('paper_vs_model')}
                         </button>
                     </div>
 
@@ -309,7 +313,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                         <div className="flex items-center justify-between mb-4">
                                             <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                                 <Percent className="h-5 w-5 text-blue-500" />
-                                                AI Confidence Score
+                                                {t('ai_confidence_score')}
                                             </h3>
                                             <span className={`text-sm font-bold px-3 py-1 rounded-full ${result.confidence > 80 ? 'bg-green-100 text-green-700' :
                                                 result.confidence > 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
@@ -326,7 +330,11 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                             />
                                         </div>
                                         <p className="text-sm text-slate-500 mt-3">
-                                            The AI is <strong>{result.confidence}% confident</strong> in this grading based on clarity of handwriting and match with the model answer.
+                                            {language === 'ar' ? (
+                                                <span>الذكاء الاصطناعي واثق بنسبة <strong>{result.confidence}%</strong> من هذا التصحيح بناءً على وضوح الخط والمطابقة مع نموذج الإجابة.</span>
+                                            ) : (
+                                                <span>The AI is <strong>{result.confidence}% confident</strong> in this grading based on clarity of handwriting and match with the model answer.</span>
+                                            )}
                                         </p>
                                     </div>
                                 )}
@@ -336,7 +344,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                     <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                                         <h3 className="font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                                             <FileText className="h-5 w-5 text-purple-500" />
-                                            Detailed Feedback
+                                            {t('detailed_feedback')}
                                         </h3>
                                         <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 leading-relaxed">
                                             {result.analysis}
@@ -349,7 +357,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                     <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-green-200 dark:border-green-900/30 shadow-sm">
                                         <h3 className="font-semibold text-green-700 dark:text-green-400 mb-4 flex items-center gap-2">
                                             <CheckCircle className="h-5 w-5" />
-                                            What Went Well
+                                            {t('what_went_well')}
                                         </h3>
                                         {result?.matchedPoints && result.matchedPoints.length > 0 ? (
                                             <ul className="space-y-3">
@@ -363,7 +371,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                                 ))}
                                             </ul>
                                         ) : (
-                                            <p className="text-sm text-slate-500 italic">No specific strengths highlighted.</p>
+                                            <p className="text-sm text-slate-500 italic">{t('no_strengths_highlighted')}</p>
                                         )}
                                     </div>
 
@@ -371,7 +379,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                     <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-red-200 dark:border-red-900/30 shadow-sm">
                                         <h3 className="font-semibold text-red-700 dark:text-red-400 mb-4 flex items-center gap-2">
                                             <XCircle className="h-5 w-5" />
-                                            Areas for Improvement
+                                            {t('areas_for_improvement')}
                                         </h3>
                                         {result?.missedPoints && result.missedPoints.length > 0 ? (
                                             <ul className="space-y-3">
@@ -385,7 +393,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                                 ))}
                                             </ul>
                                         ) : (
-                                            <p className="text-sm text-slate-500 italic">No specific errors found.</p>
+                                            <p className="text-sm text-slate-500 italic">{t('no_errors_found')}</p>
                                         )}
                                     </div>
                                 </div>
@@ -396,10 +404,10 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
                                     <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
                                         <div className="flex items-center gap-3">
-                                            <h3 className="font-semibold text-slate-900 dark:text-white">Student's Answer</h3>
+                                            <h3 className="font-semibold text-slate-900 dark:text-white">{t('student_answer')}</h3>
                                             {submissions.length > 1 && (
                                                 <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-bold">
-                                                    Page {activePage + 1} of {submissions.length}
+                                                    {t('page_of').replace('{current}', String(activePage + 1)).replace('{total}', String(submissions.length))}
                                                 </span>
                                             )}
                                         </div>
@@ -410,7 +418,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                                 rel="noopener noreferrer"
                                                 className="text-xs text-primary hover:underline flex items-center gap-1"
                                             >
-                                                Open Original <ExternalLink className="h-3 w-3" />
+                                                {t('open_original')} <ExternalLink className="h-3 w-3" />
                                             </a>
                                         )}
                                     </div>
@@ -420,7 +428,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                         ) : imageError ? (
                                             <div className="text-center text-slate-400">
                                                 <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                                <p>Failed to load image</p>
+                                                <p>{t('failed_to_load_image')}</p>
                                             </div>
                                         ) : submissions.length > 0 ? (
                                             <>
@@ -438,7 +446,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                                             onClick={() => setActivePage(p => Math.max(0, p - 1))}
                                                             className="p-1 text-white hover:text-indigo-300 disabled:opacity-30 disabled:pointer-events-none"
                                                         >
-                                                            <ArrowLeft className="h-4 w-4" />
+                                                            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
                                                         </button>
                                                         <div className="flex gap-1.5 px-1">
                                                             {submissions.map((_, i) => (
@@ -452,9 +460,9 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                                         <button 
                                                             disabled={activePage === submissions.length - 1}
                                                             onClick={() => setActivePage(p => Math.min(submissions.length - 1, p + 1))}
-                                                            className="p-1 text-white hover:text-indigo-300 disabled:opacity-30 disabled:pointer-events-none rotate-180"
+                                                            className="p-1 text-white hover:text-indigo-300 disabled:opacity-30 disabled:pointer-events-none"
                                                         >
-                                                            <ArrowLeft className="h-4 w-4" />
+                                                            <ArrowLeft className={`h-4 w-4 ${isRTL ? '' : 'rotate-180'}`} />
                                                         </button>
                                                     </div>
                                                 )}
@@ -462,7 +470,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                         ) : (
                                             <div className="text-center text-slate-400">
                                                 <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                                <p>No image available</p>
+                                                <p>{t('no_image_available')}</p>
                                             </div>
                                         )}
                                     </div>
@@ -471,7 +479,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                 {/* Model Answer */}
                                 <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
                                     <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                                        <h3 className="font-semibold text-slate-900 dark:text-white">Model Answer</h3>
+                                        <h3 className="font-semibold text-slate-900 dark:text-white">{t('model_answer')}</h3>
                                     </div>
                                     <div className="flex-1 overflow-auto p-6 bg-white dark:bg-slate-900">
                                         {modelAnswerText ? (
@@ -481,19 +489,19 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
                                         ) : modelAnswerPdfUrl ? (
                                             <div className="flex flex-col items-center justify-center h-full text-center">
                                                 <FileText className="h-16 w-16 text-slate-300 mb-4" />
-                                                <p className="mb-4 text-slate-600 dark:text-slate-400">Model answer is a PDF document.</p>
+                                                <p className="mb-4 text-slate-600 dark:text-slate-400">{t('model_answer_pdf_desc')}</p>
                                                 <a
                                                     href={modelAnswerPdfUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition-colors"
                                                 >
-                                                    View PDF Model Answer
+                                                    {t('view_pdf_model_answer')}
                                                 </a>
                                             </div>
                                         ) : (
                                             <div className="flex items-center justify-center h-full text-slate-400 italic">
-                                                No model answer provided.
+                                                {t('no_model_answer_provided')}
                                             </div>
                                         )}
                                     </div>

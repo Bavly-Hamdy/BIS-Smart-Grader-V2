@@ -5,6 +5,7 @@ import { auth, db } from '../../firebase/firebaseConfig';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '../Button';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface CreateExamModalProps {
     isOpen: boolean;
@@ -15,9 +16,13 @@ interface Course {
     id: string;
     name: string;
     code: string;
+    nameAr?: string;
+    nameEn?: string;
 }
 
 const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) => {
+    const { t, language, dir } = useLanguage();
+    const isRTL = language === 'ar';
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -50,7 +55,9 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
             const courseData = snapshot.docs.map(doc => ({
                 id: doc.id,
                 name: doc.data().name,
-                code: doc.data().code
+                code: doc.data().code,
+                nameAr: doc.data().nameAr,
+                nameEn: doc.data().nameEn
             }));
 
             setCourses(courseData);
@@ -66,23 +73,23 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
 
         try {
             if (!auth.currentUser) {
-                throw new Error('Not authenticated');
+                throw new Error(isRTL ? 'غير مصرح بالدخول' : 'Not authenticated');
             }
 
             // Validate
             if (!courseId || !title || !examDate || !duration || !totalMarks) {
-                throw new Error('Please fill in all required fields');
+                throw new Error(t('fill_required_error'));
             }
 
             const selectedCourse = courses.find(c => c.id === courseId);
             if (!selectedCourse) {
-                throw new Error('Invalid course selected');
+                throw new Error(isRTL ? 'المقرر المحدد غير صالح' : 'Invalid course selected');
             }
 
             // Validate date is in future
             const examDateTime = new Date(examDate);
             if (examDateTime < new Date()) {
-                throw new Error('Exam date must be in the future');
+                throw new Error(t('exam_date_future_error'));
             }
 
             // Create exam
@@ -112,7 +119,7 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
             onClose();
         } catch (err: any) {
             console.error('Error creating exam:', err);
-            setError(err.message || 'Failed to create exam');
+            setError(err.message || (isRTL ? 'فشل إنشاء الامتحان' : 'Failed to create exam'));
         } finally {
             setLoading(false);
         }
@@ -155,15 +162,16 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
                     className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col"
+                    dir={dir}
                 >
                     {/* Header */}
                     <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                         <div>
                             <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                                Create New Exam
+                                {t('create_new_exam')}
                             </h2>
                             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                                Set up exam details and upload model answer later
+                                {t('create_exam_subtitle')}
                             </p>
                         </div>
                         <button
@@ -186,7 +194,7 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                         {/* Course Selection */}
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Course *
+                                {t('course_label')}
                             </label>
                             <select
                                 required
@@ -194,10 +202,10 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                                 onChange={(e) => setCourseId(e.target.value)}
                                 className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-900 dark:text-white"
                             >
-                                <option value="">Select a course</option>
+                                <option value="">{t('select_course_placeholder')}</option>
                                 {courses.map(course => (
                                     <option key={course.id} value={course.id}>
-                                        {course.code} - {course.name}
+                                        {course.code} - {isRTL ? course.nameAr || course.name : course.nameEn || course.name}
                                     </option>
                                 ))}
                             </select>
@@ -206,14 +214,14 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                         {/* Exam Title */}
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                Exam Title *
+                                {t('exam_title_label')}
                             </label>
                             <input
                                 type="text"
                                 required
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder="e.g., Midterm Exam - Fall 2026"
+                                placeholder={t('exam_title_placeholder')}
                                 className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-slate-900 dark:text-white"
                             />
                         </div>
@@ -221,14 +229,14 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                         {/* Exam Type */}
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                                Exam Type *
+                                {t('exam_type_label')}
                             </label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 {[
-                                    { value: 'midterm', label: 'Midterm' },
-                                    { value: 'final', label: 'Final' },
-                                    { value: 'quiz', label: 'Quiz' },
-                                    { value: 'assignment', label: 'Assignment' }
+                                    { value: 'midterm', label: t('midterm') },
+                                    { value: 'final', label: t('final') },
+                                    { value: 'quiz', label: t('quiz') },
+                                    { value: 'assignment', label: t('assignment') }
                                 ].map((type) => (
                                     <button
                                         key={type.value}
@@ -249,8 +257,8 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    <CalendarIcon className="inline h-4 w-4 mr-2" />
-                                    Exam Date & Time *
+                                    <CalendarIcon className={`inline h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                                    {t('exam_date_label')}
                                 </label>
                                 <input
                                     type="datetime-local"
@@ -263,8 +271,8 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    <Clock className="inline h-4 w-4 mr-2" />
-                                    Duration (minutes) *
+                                    <Clock className={`inline h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                                    {t('exam_duration_label')}
                                 </label>
                                 <input
                                     type="number"
@@ -281,8 +289,8 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    <FileText className="inline h-4 w-4 mr-2" />
-                                    Total Marks *
+                                    <FileText className={`inline h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                                    {t('exam_marks_label')}
                                 </label>
                                 <input
                                     type="number"
@@ -306,7 +314,7 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                                         <div className="w-10 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                                     </div>
                                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        Multi-page Exam
+                                        {t('multi_page_label')}
                                     </span>
                                 </label>
                             </div>
@@ -322,7 +330,7 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                             disabled={loading}
                             className="flex-1"
                         >
-                            Cancel
+                            {t('cancel')}
                         </Button>
                         <Button
                             type="submit"
@@ -330,7 +338,7 @@ const CreateExamModal: React.FC<CreateExamModalProps> = ({ isOpen, onClose }) =>
                             isLoading={loading}
                             className="flex-1"
                         >
-                            Create Exam
+                            {t('create_exam_button')}
                         </Button>
                     </div>
                 </motion.div>

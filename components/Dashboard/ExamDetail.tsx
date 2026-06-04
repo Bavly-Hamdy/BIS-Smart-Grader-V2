@@ -24,10 +24,13 @@ import Button from '../Button';
 import BulkUploadModal from './BulkUploadModal';
 import { Exam, StudentSubmission } from '../../types';
 import { batchGradeSubmissions, GradingRequest } from '../../services/geminiGradingService';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ExamDetail: React.FC = () => {
     const { examId } = useParams<{ examId: string }>();
     const navigate = useNavigate();
+    const { t, language, dir } = useLanguage();
+    const isRTL = language === 'ar';
 
     const [exam, setExam] = useState<Exam | null>(null);
     const [loading, setLoading] = useState(true);
@@ -155,7 +158,7 @@ const ExamDetail: React.FC = () => {
         } catch (error) {
             console.error('Error uploading PDF:', error);
             setIsUploadingPdf(false);
-            alert('Failed to upload PDF. Please try again.');
+            alert(isRTL ? 'فشل رفع ملف PDF. يرجى المحاولة مرة أخرى.' : 'Failed to upload PDF. Please try again.');
         }
     };
 
@@ -189,7 +192,7 @@ const ExamDetail: React.FC = () => {
         } catch (error) {
             console.error('Error uploading image:', error);
             setIsUploadingImage(false);
-            alert('Failed to upload Image. Please try again.');
+            alert(isRTL ? 'فشل رفع الصورة. يرجى المحاولة مرة أخرى.' : 'Failed to upload Image. Please try again.');
         }
     };
 
@@ -242,7 +245,7 @@ const ExamDetail: React.FC = () => {
             const pendingSubmissions = submissions.filter(s => s.status === 'pending' || s.status === 'processing');
 
             if (pendingSubmissions.length === 0) {
-                alert('All submissions are already graded!');
+                alert(t('all_graded_alert'));
                 setIsGrading(false);
                 return;
             }
@@ -346,7 +349,7 @@ const ExamDetail: React.FC = () => {
 
         } catch (error) {
             console.error('Grading error:', error);
-            setGradingError('An error occurred during grading.');
+            setGradingError(t('grading_error_msg'));
             setIsGrading(false);
         }
     };
@@ -360,13 +363,13 @@ const ExamDetail: React.FC = () => {
     };
 
     const handleDeleteSubmission = async (subId: string) => {
-        if (!window.confirm('Are you sure you want to delete this submission?')) return;
+        if (!window.confirm(t('delete_submission_confirm'))) return;
         try {
             await deleteDoc(doc(db, 'submissions', subId));
             setSubmissions(prev => prev.filter(s => s.id !== subId));
         } catch (error) {
             console.error('Error deleting submission:', error);
-            alert('Failed to delete submission');
+            alert(t('delete_submission_fail'));
         }
     };
 
@@ -389,7 +392,7 @@ const ExamDetail: React.FC = () => {
     const hasModelAnswer = modelAnswerText.length > 0 || modelAnswerPdfUrl.length > 0 || modelAnswerImageUrl.length > 0;
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto">
+        <div className="space-y-6 max-w-7xl mx-auto" dir={dir}>
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -397,28 +400,28 @@ const ExamDetail: React.FC = () => {
                         onClick={() => navigate('/faculty-dashboard/exams')}
                         className="flex items-center text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors mb-4 font-medium group"
                     >
-                        <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                        Back to Exams
+                        <ArrowLeft className={`h-4 w-4 ${isRTL ? 'ml-2 rotate-180 group-hover:translate-x-1' : 'mr-2 group-hover:-translate-x-1'} transition-transform`} />
+                        {t('back_to_exams')}
                     </button>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
                         {exam.title}
                         <span className={`text-xs px-2 py-1 rounded-full ${exam.status === 'graded' ? 'bg-green-100 text-green-700' :
                             exam.status === 'completed' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'
                             }`}>
-                            {exam.status.toUpperCase()}
+                            {t(exam.status).toUpperCase()}
                         </span>
                     </h1>
                     <div className="flex items-center gap-4 mt-2 text-slate-600 dark:text-slate-400 text-sm">
-                        <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {new Date(exam.examDate).toLocaleDateString()}</span>
-                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {exam.duration} mins</span>
-                        <span className="flex items-center gap-1.5"><FileText className="h-4 w-4" /> {exam.totalMarks} Marks</span>
+                        <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> {new Date(exam.examDate).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}</span>
+                        <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {exam.duration} {isRTL ? 'دقيقة' : 'mins'}</span>
+                        <span className="flex items-center gap-1.5"><FileText className="h-4 w-4" /> {exam.totalMarks} {isRTL ? 'درجة' : 'Marks'}</span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                     <Button variant="outline" onClick={() => navigate(`/faculty-dashboard/exams/${examId}/grades`)}>
-                        <BarChart2 className="h-4 w-4 mr-2" />
-                        View Results
+                        <BarChart2 className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                        {t('view_results')}
                     </Button>
                 </div>
             </div>
@@ -429,7 +432,7 @@ const ExamDetail: React.FC = () => {
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <CheckCircle className="h-5 w-5 text-green-500" />
-                            Model Answer / Grading Rubric
+                            {t('model_answer_rubric')}
                         </h2>
 
                         {/* Mode Toggle */}
@@ -441,7 +444,7 @@ const ExamDetail: React.FC = () => {
                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                                     }`}
                             >
-                                Text
+                                {t('text_mode')}
                             </button>
                             <button
                                 onClick={() => setModelAnswerMode('pdf')}
@@ -450,7 +453,7 @@ const ExamDetail: React.FC = () => {
                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                                     }`}
                             >
-                                PDF
+                                {t('pdf_mode')}
                             </button>
                             <button
                                 onClick={() => setModelAnswerMode('image')}
@@ -459,7 +462,7 @@ const ExamDetail: React.FC = () => {
                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                                     }`}
                             >
-                                Image
+                                {t('image_mode')}
                             </button>
                         </div>
                     </div>
@@ -467,14 +470,11 @@ const ExamDetail: React.FC = () => {
                     {modelAnswerMode === 'text' ? (
                         <>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                                Enter the correct answers and grading criteria here. The AI will use this to grade student submissions.
+                                {t('enter_answers_instruction')}
                             </p>
                             <textarea
                                 className="flex-1 w-full min-h-[300px] p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none resize-none font-mono text-sm"
-                                placeholder="Example:
-1. Definition of Information System: A set of components that collect, process, store and distribute information... (5 marks)
-2. Types of Networks: LAN, WAN, MAN... (10 marks)
-..."
+                                placeholder={isRTL ? "مثال:\n1. تعريف نظام المعلومات: مجموعة من المكونات التي تجمع وتعالج وتخزن وتوزع المعلومات... (٥ درجات)\n2. أنواع الشبكات: LAN, WAN, MAN... (١٠ درجات)\n..." : "Example:\n1. Definition of Information System: A set of components that collect, process, store and distribute information... (5 marks)\n2. Types of Networks: LAN, WAN, MAN... (10 marks)\n..."}
                                 value={modelAnswerText}
                                 onChange={(e) => setModelAnswerText(e.target.value)}
                             />
@@ -485,22 +485,22 @@ const ExamDetail: React.FC = () => {
                                     isLoading={isSavingModelAnswer}
                                     disabled={!modelAnswerText}
                                 >
-                                    <Save className="h-4 w-4 mr-2" />
-                                    Save Text
+                                    <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                                    {t('save_text')}
                                 </Button>
                             </div>
                         </>
                     ) : modelAnswerMode === 'pdf' ? (
                         <>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                                Upload a PDF file containing the model answer. AI will compare student handwritten answers with this PDF.
+                                {t('upload_pdf_hint')}
                             </p>
 
                             {modelAnswerPdfUrl ? (
                                 <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-green-300 dark:border-green-700 rounded-lg">
                                     <FileText className="h-16 w-16 text-green-600 dark:text-green-400 mb-4" />
                                     <p className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{modelAnswerPdfName}</p>
-                                    <p className="text-sm text-slate-500 mb-4">PDF uploaded successfully</p>
+                                    <p className="text-sm text-slate-500 mb-4">{isRTL ? 'تم رفع ملف PDF بنجاح' : 'PDF uploaded successfully'}</p>
                                     <div className="flex gap-3">
                                         <a
                                             href={modelAnswerPdfUrl}
@@ -508,13 +508,13 @@ const ExamDetail: React.FC = () => {
                                             rel="noopener noreferrer"
                                             className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
                                         >
-                                            View PDF
+                                            {t('view_pdf_btn')}
                                         </a>
                                         <button
                                             onClick={handleDeletePdf}
                                             className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
                                         >
-                                            Delete
+                                            {t('delete_btn')}
                                         </button>
                                     </div>
                                 </div>
@@ -529,13 +529,13 @@ const ExamDetail: React.FC = () => {
                                                     style={{ width: `${uploadProgress}%` }}
                                                 ></div>
                                             </div>
-                                            <p className="text-sm text-slate-500 text-center mt-2">{Math.round(uploadProgress)}% uploaded</p>
+                                            <p className="text-sm text-slate-500 text-center mt-2">{Math.round(uploadProgress)}% {isRTL ? 'مرفوع' : 'uploaded'}</p>
                                         </div>
                                     ) : (
                                         <>
                                             <Upload className="h-12 w-12 text-slate-400 mb-4" />
-                                            <p className="text-lg font-medium text-slate-900 dark:text-white mb-2">Upload Model Answer PDF</p>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Click to browse or drag and drop</p>
+                                            <p className="text-lg font-medium text-slate-900 dark:text-white mb-2">{t('upload_pdf_title')}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{t('click_to_browse')}</p>
                                             <input
                                                 type="file"
                                                 accept="application/pdf"
@@ -548,11 +548,11 @@ const ExamDetail: React.FC = () => {
                                             />
                                             <label htmlFor="pdf-upload-input">
                                                 <Button type="button" onClick={() => document.getElementById('pdf-upload-input')?.click()}>
-                                                    <FileText className="h-4 w-4 mr-2" />
-                                                    Choose PDF File
+                                                    <FileText className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                                                    {t('choose_pdf')}
                                                 </Button>
                                             </label>
-                                            <p className="text-xs text-slate-400 mt-3">Max file size: 10MB</p>
+                                            <p className="text-xs text-slate-400 mt-3">{t('max_file_size')}</p>
                                         </>
                                     )}
                                 </div>
@@ -561,14 +561,14 @@ const ExamDetail: React.FC = () => {
                     ) : (
                         <>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                                Upload an image containing the model answer. AI will compare student handwritten answers with this image.
+                                {t('upload_image_hint')}
                             </p>
 
                             {modelAnswerImageUrl ? (
                                 <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-green-300 dark:border-green-700 rounded-lg">
                                     <img src={modelAnswerImageUrl} alt="Model Answer" className="h-24 w-auto object-contain mb-4 rounded-md shadow-sm" />
                                     <p className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{modelAnswerImageName}</p>
-                                    <p className="text-sm text-slate-500 mb-4">Image uploaded successfully</p>
+                                    <p className="text-sm text-slate-500 mb-4">{isRTL ? 'تم رفع الصورة بنجاح' : 'Image uploaded successfully'}</p>
                                     <div className="flex gap-3">
                                         <a
                                             href={modelAnswerImageUrl}
@@ -576,13 +576,13 @@ const ExamDetail: React.FC = () => {
                                             rel="noopener noreferrer"
                                             className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
                                         >
-                                            View Image
+                                            {t('view_image_btn')}
                                         </a>
                                         <button
                                             onClick={handleDeleteImage}
                                             className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
                                         >
-                                            Delete
+                                            {t('delete_btn')}
                                         </button>
                                     </div>
                                 </div>
@@ -597,13 +597,13 @@ const ExamDetail: React.FC = () => {
                                                     style={{ width: `${uploadProgress}%` }}
                                                 ></div>
                                             </div>
-                                            <p className="text-sm text-slate-500 text-center mt-2">{Math.round(uploadProgress)}% uploaded</p>
+                                            <p className="text-sm text-slate-500 text-center mt-2">{Math.round(uploadProgress)}% {isRTL ? 'مرفوع' : 'uploaded'}</p>
                                         </div>
                                     ) : (
                                         <>
                                             <Upload className="h-12 w-12 text-slate-400 mb-4" />
-                                            <p className="text-lg font-medium text-slate-900 dark:text-white mb-2">Upload Model Answer Image</p>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Click to browse or drag and drop</p>
+                                            <p className="text-lg font-medium text-slate-900 dark:text-white mb-2">{t('upload_image_title')}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{t('click_to_browse')}</p>
                                             <input
                                                 type="file"
                                                 accept="image/*"
@@ -616,11 +616,11 @@ const ExamDetail: React.FC = () => {
                                             />
                                             <label htmlFor="image-upload-input">
                                                 <Button type="button" onClick={() => document.getElementById('image-upload-input')?.click()}>
-                                                    <Camera className="h-4 w-4 mr-2" />
-                                                    Choose Image File
+                                                    <Camera className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                                                    {t('choose_image')}
                                                 </Button>
                                             </label>
-                                            <p className="text-xs text-slate-400 mt-3">Max file size: 10MB</p>
+                                            <p className="text-xs text-slate-400 mt-3">{t('max_file_size')}</p>
                                         </>
                                     )}
                                 </div>
@@ -632,27 +632,27 @@ const ExamDetail: React.FC = () => {
                 {/* Right Column: Submissions & Actions */}
                 <div className="space-y-6">
                     {/* Upload Section */}
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+                     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <Upload className="h-5 w-5 text-blue-500" />
-                                Student Submissions
+                                <Upload className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'} text-blue-500`} />
+                                {t('student_submissions')}
                             </h2>
                             <Button size="sm" onClick={() => setIsUploadModalOpen(true)}>
-                                Upload Answer Sheets
+                                {t('upload_answer_sheets')}
                             </Button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 mb-4">
                             <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
                                 <p className="text-2xl font-bold text-slate-900 dark:text-white">{submissions.length}</p>
-                                <p className="text-xs text-slate-500">Total Uploaded</p>
+                                <p className="text-xs text-slate-500">{t('total_uploaded')}</p>
                             </div>
                             <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
                                 <p className="text-2xl font-bold text-slate-900 dark:text-white">
                                     {submissions.filter(s => s.status === 'graded').length}
                                 </p>
-                                <p className="text-xs text-slate-500">Graded</p>
+                                <p className="text-xs text-slate-500">{t('graded_count_label')}</p>
                             </div>
                         </div>
 
@@ -667,7 +667,7 @@ const ExamDetail: React.FC = () => {
                                         <div className="flex items-center gap-3">
                                             <span className={`text-xs px-2 py-0.5 rounded ${sub.status === 'graded' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                                                 }`}>
-                                                {sub.status}
+                                                {t(sub.status)}
                                             </span>
                                             <button 
                                                 onClick={() => handleDeleteSubmission(sub.id)}
@@ -682,7 +682,7 @@ const ExamDetail: React.FC = () => {
                             </div>
                         ) : (
                             <div className="text-center py-8 text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
-                                <p>No answer sheets uploaded yet.</p>
+                                <p>{t('no_submissions_uploaded')}</p>
                             </div>
                         )}
                     </div>
@@ -690,17 +690,17 @@ const ExamDetail: React.FC = () => {
                     {/* Grading Action */}
                     <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl p-6 text-white shadow-lg">
                         <h2 className="text-lg font-bold flex items-center gap-2 mb-2">
-                            <Play className="h-5 w-5" />
-                            AI Auto-Grading
+                            <Play className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                            {t('ai_auto_grading')}
                         </h2>
                         <p className="text-indigo-100 text-sm mb-6">
-                            Start the automated grading process using Gemini AI. This compares student answers with your model answer.
+                            {t('ai_grading_subtitle')}
                         </p>
 
                         {isGrading ? (
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm mb-1">
-                                    <span>Grading in progress...</span>
+                                    <span>{isRTL ? 'جاري التصحيح التلقائي...' : 'Grading in progress...'}</span>
                                     <span>{Math.round((gradingProgress.current / gradingProgress.total) * 100)}%</span>
                                 </div>
                                 <div className="w-full bg-indigo-900/50 rounded-full h-2.5 overflow-hidden">
@@ -710,7 +710,7 @@ const ExamDetail: React.FC = () => {
                                     ></div>
                                 </div>
                                 <p className="text-xs text-indigo-200 mt-2 text-center">
-                                    Processing {gradingProgress.current} of {gradingProgress.total} papers
+                                    {isRTL ? `جاري معالجة ${gradingProgress.current} من أصل ${gradingProgress.total} طالب` : `Processing ${gradingProgress.current} of ${gradingProgress.total} students`}
                                 </p>
                             </div>
                         ) : (
@@ -722,9 +722,9 @@ const ExamDetail: React.FC = () => {
                                     : 'bg-indigo-800/50 text-indigo-400 cursor-not-allowed'
                                     }`}
                             >
-                                {submissions.length === 0 ? 'Upload Submissions First' :
-                                    !hasModelAnswer ? 'Enter Model Answer First' :
-                                        'Start Grading Now'}
+                                {submissions.length === 0 ? t('upload_submissions_first') :
+                                    !hasModelAnswer ? t('enter_model_answer_first') :
+                                        t('start_grading_now')}
                             </button>
                         )}
 

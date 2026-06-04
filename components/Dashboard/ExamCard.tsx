@@ -3,6 +3,7 @@ import { Calendar, Clock, FileText, Lock, MoreVertical, ChevronRight, CheckCircl
 import { useNavigate } from 'react-router-dom';
 import { Exam } from '../../types';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface ExamCardProps {
     exam: Exam;
@@ -10,6 +11,8 @@ interface ExamCardProps {
 
 const ExamCard: React.FC<ExamCardProps> = ({ exam }) => {
     const navigate = useNavigate();
+    const { t, language } = useLanguage();
+    const isRTL = language === 'ar';
 
     const getExamTypeColor = (type: string) => {
         switch (type) {
@@ -39,7 +42,7 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam }) => {
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return date.toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
     const isUpcoming = new Date(exam.examDate) > new Date();
@@ -52,12 +55,12 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam }) => {
             className="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all cursor-pointer relative overflow-hidden"
         >
             {/* Status Indicator Stripe */}
-            <div className={`absolute top-0 left-0 w-1 h-full ${typeStyle.bg.replace('/20', '')}`} />
+            <div className={`absolute top-0 ${isRTL ? 'right-0' : 'left-0'} w-1 h-full ${typeStyle.bg.replace('/20', '')}`} />
 
             <div className="flex justify-between items-start mb-4">
                 <div>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${typeStyle.bg} ${typeStyle.text} mb-2`}>
-                        {exam.examType.charAt(0).toUpperCase() + exam.examType.slice(1)}
+                        {isRTL ? t(exam.examType) : exam.examType.charAt(0).toUpperCase() + exam.examType.slice(1)}
                     </span>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1">
                         {exam.title}
@@ -75,22 +78,22 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam }) => {
 
             <div className="space-y-3 mb-6">
                 <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
-                    <Calendar className="h-4 w-4 mr-2.5 opacity-70" />
+                    <Calendar className="h-4 w-4 me-2.5 opacity-70" />
                     <span className="font-medium">{formatDate(exam.examDate)}</span>
-                    {isUpcoming && <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">Upcoming</span>}
+                    {isUpcoming && <span className="ms-2 text-[10px] font-bold uppercase tracking-wider text-amber-500 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">{t('upcoming')}</span>}
                 </div>
 
                 <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
-                    <Clock className="h-4 w-4 mr-2.5 opacity-70" />
-                    <span>{exam.duration} mins</span>
+                    <Clock className="h-4 w-4 me-2.5 opacity-70" />
+                    <span>{exam.duration} {isRTL ? 'دقيقة' : 'mins'}</span>
                     <span className="mx-2 text-slate-300">|</span>
-                    <span className="font-medium">{exam.totalMarks} Marks</span>
+                    <span className="font-medium">{exam.totalMarks} {isRTL ? 'درجة' : 'Marks'}</span>
                 </div>
 
                 <div className="flex items-center text-sm">
-                    <FileText className={`h-4 w-4 mr-2.5 ${exam.modelAnswerId ? 'text-emerald-500' : 'text-slate-400'}`} />
+                    <FileText className={`h-4 w-4 me-2.5 ${exam.modelAnswerId ? 'text-emerald-500' : 'text-slate-400'}`} />
                     <span className={exam.modelAnswerId ? 'text-emerald-700 dark:text-emerald-400 font-medium' : 'text-slate-400'}>
-                        {exam.modelAnswerId ? 'Model Answer Attached' : 'No Model Answer'}
+                        {exam.modelAnswerId ? t('model_answer_attached') : t('no_model_answer')}
                     </span>
                 </div>
             </div>
@@ -99,12 +102,12 @@ const ExamCard: React.FC<ExamCardProps> = ({ exam }) => {
                 <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${getStatusColor(exam.status).replace('text-', 'bg-')}`} />
                     <span className={`text-sm font-semibold capitalize ${getStatusColor(exam.status)}`}>
-                        {exam.status}
+                        {t(exam.status)}
                     </span>
                 </div>
 
-                <div className="flex items-center gap-1 text-primary font-medium text-sm group-hover:translate-x-1 transition-transform">
-                    View Details <ChevronRight className="h-4 w-4" />
+                <div className={`flex items-center gap-1 text-primary font-medium text-sm transition-transform ${isRTL ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`}>
+                    {t('view_details')} <ChevronRight className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
                 </div>
             </div>
         </motion.div>

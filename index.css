@@ -40,3 +40,13 @@ body.reduced-motion * {
   animation: none !important;
   transition: none !important;
 }
+
+/* Premium Arabic Typography Fallback */
+html[lang="ar"],
+html[lang="ar"] body,
+html[lang="ar"] button,
+html[lang="ar"] input,
+html[lang="ar"] textarea,
+html[lang="ar"] select {
+  font-family: 'Cairo', 'Segoe UI Arabian', 'SF Pro Arabic', 'Tajawal', sans-serif !important;
+}

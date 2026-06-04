@@ -9,9 +9,12 @@ import Button from '../Button';
 import CreateExamModal from './CreateExamModal';
 import ExamCard from './ExamCard';
 import { Exam } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ExamManagement: React.FC = () => {
     const navigate = useNavigate();
+    const { t, language, dir } = useLanguage();
+    const isRTL = language === 'ar';
     const [exams, setExams] = useState<Exam[]>([]);
     const [filteredExams, setFilteredExams] = useState<Exam[]>([]);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -76,11 +79,11 @@ const ExamManagement: React.FC = () => {
     };
 
     const examTypes = [
-        { value: 'all', label: 'All Types' },
-        { value: 'midterm', label: 'Midterm' },
-        { value: 'final', label: 'Final' },
-        { value: 'quiz', label: 'Quiz' },
-        { value: 'assignment', label: 'Assignment' },
+        { value: 'all', label: t('all_types') },
+        { value: 'midterm', label: t('midterm') },
+        { value: 'final', label: t('final') },
+        { value: 'quiz', label: t('quiz') },
+        { value: 'assignment', label: t('assignment') },
     ];
 
     // Stats Card Component
@@ -117,7 +120,7 @@ const ExamManagement: React.FC = () => {
     };
 
     return (
-        <div className="space-y-8 pb-12 max-w-7xl mx-auto">
+        <div className="space-y-8 pb-12 max-w-7xl mx-auto" dir={dir}>
 
             {/* Header Section with Gradient */}
             <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
@@ -130,19 +133,19 @@ const ExamManagement: React.FC = () => {
                             onClick={() => navigate('/faculty-dashboard')}
                             className="flex items-center text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors mb-4 font-medium group"
                         >
-                            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                            Back to Overview
+                            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'ml-2 rotate-180 group-hover:translate-x-1' : 'mr-2 group-hover:-translate-x-1'} transition-transform`} />
+                            {t('back_to_overview')}
                         </button>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold uppercase tracking-wider rounded-full">
-                                Examinations
+                                {t('examinations')}
                             </span>
                         </div>
                         <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight mb-2">
-                            Exams Manager
+                            {t('exams_manager')}
                         </h1>
                         <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl">
-                            Schedule, manage, and track all your course assessments in one place.
+                            {t('exams_subtitle')}
                         </p>
                     </div>
                     <Button
@@ -150,17 +153,17 @@ const ExamManagement: React.FC = () => {
                         className="flex items-center gap-2 px-6 py-3.5 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all text-base font-semibold"
                     >
                         <Plus className="h-5 w-5" />
-                        Create New Exam
+                        {t('create_new_exam')}
                     </Button>
                 </div>
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard label="Total Exams" value={stats.total} icon={FileText} color="blue" delay={1} />
-                <StatCard label="Upcoming" value={stats.upcoming} icon={Clock} color="amber" delay={2} />
-                <StatCard label="Completed" value={stats.completed} icon={CheckCircle} color="emerald" delay={3} />
-                <StatCard label="With Model Answers" value={stats.withModelAnswer} icon={AlertCircle} color="purple" delay={4} />
+                <StatCard label={t('total_exams')} value={stats.total} icon={FileText} color="blue" delay={1} />
+                <StatCard label={t('upcoming')} value={stats.upcoming} icon={Clock} color="amber" delay={2} />
+                <StatCard label={t('completed')} value={stats.completed} icon={CheckCircle} color="emerald" delay={3} />
+                <StatCard label={t('with_model_answers')} value={stats.withModelAnswer} icon={AlertCircle} color="purple" delay={4} />
             </div>
 
             {/* Filters & Control Bar */}
@@ -168,15 +171,17 @@ const ExamManagement: React.FC = () => {
                 <div className="flex flex-col md:flex-row gap-4 p-2">
                     {/* Search Input */}
                     <div className="flex-1 relative group">
-                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <div className={`absolute inset-y-0 ${isRTL ? 'right-3' : 'left-3'} flex items-center pointer-events-none`}>
                             <Search className="h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
                         </div>
                         <input
                             type="text"
-                            placeholder="Search by exam title, course code..."
+                            placeholder={t('search_exams_placeholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-white placeholder:text-slate-400 transition-all font-medium"
+                            className={`w-full py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-white placeholder:text-slate-400 transition-all font-medium ${
+                                isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'
+                            }`}
                         />
                     </div>
 
@@ -215,17 +220,17 @@ const ExamManagement: React.FC = () => {
                             <FileText className="h-10 w-10 text-slate-300 dark:text-slate-600" />
                         </div>
                         <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                            {searchQuery || filterType !== 'all' ? 'No exams found' : 'No exams created yet'}
+                            {searchQuery || filterType !== 'all' ? t('no_exams_found') : t('no_exams_created')}
                         </h3>
                         <p className="text-slate-500 max-w-md mx-auto mb-8">
                             {searchQuery || filterType !== 'all'
-                                ? 'We couldn\'t find any exams matching your current filters. Try adjusting your search or filter settings.'
-                                : 'Get started by creating your first exam. You can set up details, duration, and later upload model answers.'}
+                                ? t('no_exams_found_desc')
+                                : t('no_exams_created_desc')}
                         </p>
                         {!searchQuery && filterType === 'all' && (
                             <Button onClick={() => setIsCreateModalOpen(true)} size="lg" className="shadow-lg hover:shadow-xl">
-                                <Plus className="h-5 w-5 mr-2" />
-                                Create First Exam
+                                <Plus className="h-5 w-5 me-2" />
+                                {t('create_first_exam')}
                             </Button>
                         )}
                     </div>

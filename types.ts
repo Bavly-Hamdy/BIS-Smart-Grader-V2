@@ -184,12 +184,31 @@ export interface Course {
   id: string;
   code: string;
   name: string;
+  nameAr?: string;
+  nameEn?: string;
   description?: string;
   creditHours: number;
+  theoryHours?: number;
+  practicalHours?: number;
   facultyId: string;
   semester: string;
   academicYear: string;
   gradingScheme: CourseGradingScheme;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BISCourse {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  theoryHours: number;
+  practicalHours: number;
+  creditHours: number;
+  preRequisite?: string;
+}
+
+export interface DBActionResponse {
+  success: boolean;
+  error?: string;
 }

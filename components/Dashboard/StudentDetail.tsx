@@ -13,6 +13,7 @@ import {
     Award
 } from 'lucide-react';
 import Button from '../Button';
+import { useLanguage } from '../../context/LanguageContext';
 import {
     LineChart,
     Line,
@@ -37,6 +38,8 @@ interface StudentCoursePerformance {
 const StudentDetail: React.FC = () => {
     const { studentId } = useParams<{ studentId: string }>();
     const navigate = useNavigate();
+    const { t, language, dir } = useLanguage();
+    const isRTL = language === 'ar';
     const [loading, setLoading] = useState(true);
     const [studentName, setStudentName] = useState('');
     const [performances, setPerformances] = useState<StudentCoursePerformance[]>([]);
@@ -112,7 +115,7 @@ const StudentDetail: React.FC = () => {
     );
 
     return (
-        <div className="space-y-8 animate-fade-in max-w-7xl mx-auto pb-12">
+        <div className="space-y-8 animate-fade-in max-w-7xl mx-auto pb-12" dir={dir}>
 
             {/* Header Section with Gradient */}
             <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
@@ -125,8 +128,8 @@ const StudentDetail: React.FC = () => {
                                 onClick={() => navigate('/faculty-dashboard/students')}
                                 className="flex items-center text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors mb-4 font-medium group"
                             >
-                                <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                                Back to Students
+                                <ArrowLeft className={`h-4 w-4 ${isRTL ? 'ml-2 rotate-180 group-hover:translate-x-1' : 'mr-2 group-hover:-translate-x-1'} transition-transform`} />
+                                {t('back_to_students')}
                             </button>
                             <div className="flex items-center gap-6">
                                 <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 shadow-inner flex items-center justify-center text-cyan-600 dark:text-cyan-400 text-3xl font-bold border-2 border-white dark:border-slate-700">
@@ -143,7 +146,11 @@ const StudentDetail: React.FC = () => {
                                     </div>
                                     <p className="text-lg text-slate-600 dark:text-slate-400 flex items-center gap-2">
                                         <GraduationCap className="h-5 w-5 text-cyan-500" />
-                                        Enrolled in <span className="font-bold text-slate-900 dark:text-white">{performances.length}</span> active courses
+                                        {language === 'ar' ? (
+                                            <span>مسجل في <span className="font-bold text-slate-900 dark:text-white">{performances.length}</span> مقرر نشط</span>
+                                        ) : (
+                                            <span>Enrolled in <span className="font-bold text-slate-900 dark:text-white">{performances.length}</span> active courses</span>
+                                        )}
                                     </p>
                                 </div>
                             </div>
@@ -158,8 +165,8 @@ const StudentDetail: React.FC = () => {
                         <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                             <BookOpen className="h-8 w-8 text-slate-400" />
                         </div>
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">No Academic Records</h3>
-                        <p className="text-slate-500">This student has no graded exams yet.</p>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('no_academic_records')}</h3>
+                        <p className="text-slate-500">{t('no_graded_exams_yet')}</p>
                     </div>
                 ) : (
                     performances.map(perf => (
@@ -178,11 +185,11 @@ const StudentDetail: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-8">
                                     <div className="text-right hidden sm:block">
-                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Highest</p>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">{t('highest_grade')}</p>
                                         <p className="text-lg font-bold text-emerald-600">{perf.highest}%</p>
                                     </div>
                                     <div className="text-right bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-0.5">Average</p>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-0.5">{t('average_label')}</p>
                                         <p className={`text-2xl font-black ${perf.average >= 85 ? 'text-emerald-500' : perf.average >= 70 ? 'text-blue-500' : 'text-slate-700'}`}>
                                             {perf.average}%
                                         </p>
@@ -195,7 +202,7 @@ const StudentDetail: React.FC = () => {
                                 <div className="xl:col-span-2 p-6 md:p-8">
                                     <h3 className="font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                                         <TrendingUp className="h-5 w-5 text-cyan-500" />
-                                        Performance Trend
+                                        {t('performance_trend')}
                                     </h3>
                                     <div className="h-72 w-full bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
                                         <ResponsiveContainer width="100%" height="100%">
@@ -234,7 +241,7 @@ const StudentDetail: React.FC = () => {
                                                     strokeWidth={4}
                                                     dot={{ fill: '#06b6d4', strokeWidth: 4, r: 4, stroke: '#fff' }}
                                                     activeDot={{ r: 8, strokeWidth: 0, fill: '#0891b2' }}
-                                                    name="Score (%)"
+                                                    name={t('score_percentage')}
                                                 />
                                             </LineChart>
                                         </ResponsiveContainer>
@@ -245,7 +252,7 @@ const StudentDetail: React.FC = () => {
                                 <div className="xl:col-span-1 p-6 md:p-8 bg-slate-50/30 dark:bg-slate-800/10">
                                     <h3 className="font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                                         <Award className="h-5 w-5 text-amber-500" />
-                                        Recent Assessments
+                                        {t('recent_assessments')}
                                     </h3>
                                     <div className="space-y-4 max-h-[340px] overflow-y-auto pr-2 custom-scrollbar">
                                         {perf.grades.map((grade, idx) => (
@@ -256,7 +263,7 @@ const StudentDetail: React.FC = () => {
                                                     </p>
                                                     <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-1.5">
                                                         <Calendar className="h-3 w-3" />
-                                                        {new Date(grade.gradedAt).toLocaleDateString()}
+                                                        {new Date(grade.gradedAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US')}
                                                     </p>
                                                 </div>
                                                 <div className="text-right">

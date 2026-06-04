@@ -22,7 +22,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const DashboardHome: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isRTL = language === 'ar';
   const [courses, setCourses] = useState<Course[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
   const [grades, setGrades] = useState<any[]>([]);
@@ -201,7 +202,7 @@ const DashboardHome: React.FC = () => {
             </div>
             {isClickable && (
               <div className={`p-1.5 rounded-full ${style.bg} ${style.text} opacity-0 group-hover:opacity-100 transition-opacity`}>
-                {showStudentBreakdown && label.includes('Students') ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                {showStudentBreakdown ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </div>
             )}
           </div>
@@ -215,8 +216,8 @@ const DashboardHome: React.FC = () => {
   const passCount = grades.filter(g => (g.percentage || g.score || 0) >= 50).length;
   const failCount = grades.length - passCount;
   const pieData = [
-    { name: 'Pass', value: passCount },
-    { name: 'Fail', value: failCount },
+    { name: isRTL ? 'ناجح' : 'Pass', value: passCount },
+    { name: isRTL ? 'راسب' : 'Fail', value: failCount },
   ];
   const COLORS = ['#10b981', '#f43f5e'];
 
@@ -230,21 +231,21 @@ const DashboardHome: React.FC = () => {
         <div className="relative p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider rounded-full">
-                Academic Year 2025-2026
+              <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider rounded-full font-mono">
+                {t('academic_year')}
               </span>
             </div>
             <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight mb-2">
-              Dashboard
+              {t('dashboard_title')}
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-400">
-              Welcome back, <span className="font-semibold text-slate-900 dark:text-white">{userName}</span>
+              {t('welcome_back_name')} <span className="font-semibold text-slate-900 dark:text-white">{userName}</span>
             </p>
           </div>
 
-          <div className="hidden md:block text-right">
+          <div className="hidden md:block text-end">
             <div className="text-sm font-medium text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-xl border border-slate-100 dark:border-slate-700">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
           </div>
         </div>
@@ -252,9 +253,9 @@ const DashboardHome: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
-        <StatCard label={t('active_courses') || 'Courses'} value={courses.length} icon={BookOpen} color="blue" delay={1} />
+        <StatCard label={t('active_courses')} value={courses.length} icon={BookOpen} color="blue" delay={1} />
         <StatCard 
-          label={t('total_students') || 'Students'} 
+          label={t('total_students')} 
           value={totalStudents} 
           icon={Users} 
           color="teal" 
@@ -262,10 +263,10 @@ const DashboardHome: React.FC = () => {
           isClickable={true}
           onClick={() => setShowStudentBreakdown(!showStudentBreakdown)}
         />
-        <StatCard label={t('active_exams') || 'Exams'} value={activeExams} icon={Calendar} color="purple" delay={3} />
-        <StatCard label={t('new_grades') || 'Grades'} value={recentGradesCount} icon={FileCheck} color="indigo" delay={4} />
-        <StatCard label={t('avg_score') || 'Avg Score'} value={`${averageScore}%`} icon={TrendingUp} color="emerald" delay={5} />
-        <StatCard label={t('at_risk') || 'At Risk'} value={failCount} icon={AlertTriangle} color="rose" delay={6} />
+        <StatCard label={t('active_exams')} value={activeExams} icon={Calendar} color="purple" delay={3} />
+        <StatCard label={t('new_grades')} value={recentGradesCount} icon={FileCheck} color="indigo" delay={4} />
+        <StatCard label={t('avg_score')} value={`${averageScore}%`} icon={TrendingUp} color="emerald" delay={5} />
+        <StatCard label={t('at_risk')} value={failCount} icon={AlertTriangle} color="rose" delay={6} />
       </div>
 
       {/* Student Breakdown Section */}
@@ -282,7 +283,9 @@ const DashboardHome: React.FC = () => {
                 <div className="p-2 bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-lg">
                   <Layers className="h-5 w-5" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Unique Students per Course</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  {isRTL ? 'الطلاب المسجلين لكل مقرر' : 'Unique Students per Course'}
+                </h3>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -301,13 +304,13 @@ const DashboardHome: React.FC = () => {
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="text-2xl font-black text-slate-900 dark:text-white">{item.count}</span>
-                        <span className="text-[10px] text-slate-500 uppercase font-bold">Students</span>
+                        <span className="text-[10px] text-slate-500 uppercase font-bold">{t('students_count')}</span>
                       </div>
                     </motion.div>
                   ))
                 ) : (
                   <div className="col-span-full py-10 text-center text-slate-500 bg-white/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
-                    No student data available for courses yet.
+                    {isRTL ? 'لا توجد بيانات طلاب متاحة للمقررات بعد.' : 'No student data available for courses yet.'}
                   </div>
                 )}
               </div>
@@ -329,9 +332,9 @@ const DashboardHome: React.FC = () => {
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-indigo-500" />
-                Grade Distribution
+                {t('grade_distribution')}
               </h3>
-              <p className="text-sm text-slate-500">Overall performance curve</p>
+              <p className="text-sm text-slate-500">{t('overall_performance_curve')}</p>
             </div>
           </div>
           <div className="h-72 w-full">
@@ -366,7 +369,7 @@ const DashboardHome: React.FC = () => {
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
                 <GraduationCap className="h-10 w-10 mb-2 opacity-50" />
-                <span>No grade data available yet</span>
+                <span>{isRTL ? 'لا تتوفر بيانات للدرجات بعد' : 'No grade data available yet'}</span>
               </div>
             )}
           </div>
@@ -383,9 +386,9 @@ const DashboardHome: React.FC = () => {
             <div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Users className="h-5 w-5 text-emerald-500" />
-                Success Rate
+                {isRTL ? 'نسبة النجاح' : 'Success Rate'}
               </h3>
-              <p className="text-sm text-slate-500">Pass vs Fail Ratio</p>
+              <p className="text-sm text-slate-500">{t('pass_fail_ratio')}</p>
             </div>
           </div>
           <div className="h-72 flex items-center justify-center relative">
@@ -414,13 +417,13 @@ const DashboardHome: React.FC = () => {
                   <span className="text-3xl font-bold text-slate-900 dark:text-white">
                     {((passCount / grades.length) * 100).toFixed(0)}%
                   </span>
-                  <span className="text-xs uppercase tracking-widest text-slate-500 font-semibold">Pass Rate</span>
+                  <span className="text-xs uppercase tracking-widest text-slate-500 font-semibold">{t('pass_rate')}</span>
                 </div>
               </>
             ) : (
               <div className="h-full w-full flex flex-col items-center justify-center text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
                 <AlertTriangle className="h-10 w-10 mb-2 opacity-50" />
-                <span>No data available yet</span>
+                <span>{isRTL ? 'لا تتوفر بيانات بعد' : 'No data available yet'}</span>
               </div>
             )}
           </div>
@@ -446,7 +449,7 @@ const DashboardHome: React.FC = () => {
             className="text-sm font-semibold text-primary hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors flex items-center gap-1 group"
           >
             {t('view_all') || 'View All'}
-            <span className="transform group-hover:translate-x-1 transition-transform">→</span>
+            <span className={`transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'} transition-transform`}>→</span>
           </button>
         </div>
 
@@ -458,21 +461,28 @@ const DashboardHome: React.FC = () => {
           ) : courses.length === 0 ? (
             <div className="col-span-full py-16 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
               <BookOpen className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">No active courses yet</h3>
-              <p className="text-slate-500 mb-6">Start by creating your first course to manage exams and grades.</p>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+                {isRTL ? 'لا توجد دورات نشطة بعد' : 'No active courses yet'}
+              </h3>
+              <p className="text-slate-500 mb-6">
+                {isRTL ? 'ابدأ بتعيين مقرراتك الدراسية الأولى لإدارة الامتحانات والدرجات.' : 'Start by selecting your first course to manage exams and grades.'}
+              </p>
               <button
                 onClick={() => navigate('/faculty-dashboard/courses')}
                 className="px-6 py-2.5 bg-primary text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all"
               >
-                Create Course
+                {isRTL ? 'اختر مقرراتك' : 'Select Courses'}
               </button>
             </div>
           ) : (
             courses.slice(0, 4).map(course => (
               <CourseCard
                 key={course.id}
-                title={course.name}
+                title={isRTL ? course.nameAr || course.name : course.nameEn || course.name}
                 code={course.code}
+                description={course.description}
+                creditHours={course.creditHours}
+                semester={course.semester}
                 studentCount={grades.filter(g => g.courseId === course.id).length || 0}
                 onClick={() => navigate(`/faculty-dashboard/courses/${course.id}`)}
               />

@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import { GradeSheet, Grade } from '../../types';
 import { TrendingUp, Users, CheckCircle, AlertTriangle } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface GradeAnalyticsProps {
     uniqueKey: string; // Force re-render/animation
@@ -23,6 +24,7 @@ interface GradeAnalyticsProps {
 }
 
 const GradeAnalytics: React.FC<GradeAnalyticsProps> = ({ gradeSheet, uniqueKey }) => {
+    const { t } = useLanguage();
 
     // 1. Prepare Data for Grade Distribution (A, B, C, D, F)
     const gradeDistributionData = useMemo(() => {
@@ -40,10 +42,10 @@ const GradeAnalytics: React.FC<GradeAnalyticsProps> = ({ gradeSheet, uniqueKey }
         const passed = gradeSheet.statistics.passed;
         const failed = gradeSheet.statistics.failed;
         return [
-            { name: 'Passed', value: passed },
-            { name: 'Failed', value: failed }
+            { name: t('passed'), value: passed },
+            { name: t('failed'), value: failed }
         ];
-    }, [gradeSheet]);
+    }, [gradeSheet, t]);
 
     // 3. Prepare Data for Score Ranges (Binning)
     const scoreRangeData = useMemo(() => {
@@ -86,7 +88,7 @@ const GradeAnalytics: React.FC<GradeAnalyticsProps> = ({ gradeSheet, uniqueKey }
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
                         <TrendingUp className="h-5 w-5 text-primary" />
-                        Grade Distribution
+                        {t('grade_distribution')}
                     </h3>
                 </div>
                 <div className="h-64 w-full">
@@ -124,7 +126,7 @@ const GradeAnalytics: React.FC<GradeAnalyticsProps> = ({ gradeSheet, uniqueKey }
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
                         <Users className="h-5 w-5 text-primary" />
-                        Pass Rate Overview
+                        {t('pass_rate_overview')}
                     </h3>
                 </div>
                 <div className="h-64 w-full relative">
@@ -153,7 +155,7 @@ const GradeAnalytics: React.FC<GradeAnalyticsProps> = ({ gradeSheet, uniqueKey }
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="text-center">
                             <span className="text-2xl font-bold text-slate-900 dark:text-white">{gradeSheet.statistics.passRate}%</span>
-                            <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Pass Rate</p>
+                            <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">{t('pass_rate')}</p>
                         </div>
                     </div>
                 </div>
@@ -164,7 +166,7 @@ const GradeAnalytics: React.FC<GradeAnalyticsProps> = ({ gradeSheet, uniqueKey }
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
                         <CheckCircle className="h-5 w-5 text-primary" />
-                        Score Performance Ranges
+                        {t('score_performance_ranges')}
                     </h3>
                 </div>
                 <div className="h-64 w-full">

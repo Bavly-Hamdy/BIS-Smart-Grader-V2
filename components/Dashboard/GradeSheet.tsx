@@ -30,10 +30,13 @@ import Button from '../Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import GradeDetailModal from './GradeDetailModal';
 import GradeAnalytics from './GradeAnalytics';
+import { useLanguage } from '../../context/LanguageContext';
 
 const GradeSheetPage: React.FC = () => {
     const { examId } = useParams<{ examId: string }>();
     const navigate = useNavigate();
+    const { t, language, dir } = useLanguage();
+    const isRTL = language === 'ar';
     const [gradeSheet, setGradeSheet] = useState<GradeSheet | null>(null);
     const [filteredGrades, setFilteredGrades] = useState<Grade[]>([]);
     const [loading, setLoading] = useState(true);
@@ -139,7 +142,7 @@ const GradeSheetPage: React.FC = () => {
     };
 
     const handleDeleteGrade = async (grade: Grade) => {
-        if (!window.confirm(`Are you sure you want to completely delete the record and submission for ${grade.studentName}?`)) return;
+        if (!window.confirm(t('delete_grade_confirm').replace('{name}', grade.studentName))) return;
         try {
             await deleteDoc(doc(db, 'grades', grade.id));
             if (grade.submissionId) {
@@ -148,7 +151,7 @@ const GradeSheetPage: React.FC = () => {
             fetchGrades(); // Refresh the list
         } catch (error) {
             console.error('Error deleting grade:', error);
-            alert('Failed to delete grade record.');
+            alert(t('delete_grade_fail'));
         }
     };
 
@@ -162,11 +165,11 @@ const GradeSheetPage: React.FC = () => {
         
         const unpublishedGrades = gradeSheet.grades.filter(g => g.status !== 'published');
         if (unpublishedGrades.length === 0) {
-            alert('All results are already published!');
+            alert(t('publish_all_already'));
             return;
         }
 
-        if (!window.confirm(`Are you sure you want to publish all ${unpublishedGrades.length} unpublished results? This will make them visible to students.`)) return;
+        if (!window.confirm(t('publish_all_confirm').replace('{count}', String(unpublishedGrades.length)))) return;
 
         try {
             setIsPublishing(true);
@@ -178,11 +181,11 @@ const GradeSheetPage: React.FC = () => {
             );
             
             await Promise.all(publishPromises);
-            alert('All results have been published successfully!');
+            alert(t('results_published_alert'));
             fetchGrades();
         } catch (error) {
             console.error('Error publishing results:', error);
-            alert('Failed to publish some results.');
+            alert(t('publish_all_fail'));
         } finally {
             setIsPublishing(false);
         }
@@ -192,7 +195,11 @@ const GradeSheetPage: React.FC = () => {
         const newStatus = grade.status === 'published' ? 'draft' : 'published';
         const action = newStatus === 'published' ? 'publish' : 'unpublish';
         
-        if (!window.confirm(`Are you sure you want to ${action} this result?`)) return;
+        const translatedAction = isRTL 
+            ? (action === 'publish' ? 'نشر' : 'إلغاء نشر') 
+            : action;
+
+        if (!window.confirm(t('publish_grade_confirm').replace('{action}', translatedAction))) return;
 
         try {
             await updateDoc(doc(db, 'grades', grade.id), { 
@@ -202,7 +209,7 @@ const GradeSheetPage: React.FC = () => {
             fetchGrades();
         } catch (error) {
             console.error('Error updating grade status:', error);
-            alert('Failed to update grade status.');
+            alert(t('publish_grade_fail'));
         }
     };
 
@@ -211,7 +218,7 @@ const GradeSheetPage: React.FC = () => {
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="relative">
                     <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                    <div className="mt-4 text-indigo-600 font-medium text-sm">Loading Grades...</div>
+                    <div className="mt-4 text-indigo-600 font-medium text-sm">{t('loading_grades')}</div>
                 </div>
             </div>
         );
@@ -219,12 +226,12 @@ const GradeSheetPage: React.FC = () => {
 
     if (!gradeSheet) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8" dir={dir}>
                 <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-full mb-4">
                     <FileSpreadsheet className="h-12 w-12 text-slate-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">No Grade Data Found</h3>
-                <p className="text-slate-500 max-w-md">There are no grades available for this exam yet. Please start grading submissions first.</p>
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">{t('no_grade_data_found')}</h3>
+                <p className="text-slate-500 max-w-md">{t('no_grade_data_desc')}</p>
             </div>
         );
     }
@@ -232,7 +239,7 @@ const GradeSheetPage: React.FC = () => {
     const stats = gradeSheet.statistics;
 
     return (
-        <div className="space-y-8 pb-12 max-w-7xl mx-auto">
+        <div className="space-y-8 pb-12 max-w-7xl mx-auto" dir={dir}>
             {/* Premium Header */}
             <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
@@ -244,8 +251,8 @@ const GradeSheetPage: React.FC = () => {
                             onClick={() => navigate(`/faculty-dashboard/exams/${examId}`)}
                             className="flex items-center text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors mb-4 font-medium group"
                         >
-                            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                            Back to Exam Detail
+                            <ArrowLeft className={`h-4 w-4 ${isRTL ? 'ml-2 rotate-180 group-hover:translate-x-1' : 'mr-2 group-hover:-translate-x-1'} transition-transform`} />
+                            {t('back_to_exam_detail')}
                         </button>
                         <div className="flex items-center gap-3 mb-3">
                             <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider rounded-full text-center min-w-[60px]">
@@ -259,7 +266,7 @@ const GradeSheetPage: React.FC = () => {
                             {gradeSheet.examTitle}
                         </h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">
-                            Grade Report & Performance Analytics
+                            {t('grade_report_analytics')}
                         </p>
                     </div>
 
@@ -271,8 +278,8 @@ const GradeSheetPage: React.FC = () => {
                                 ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 hover:border-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none'
                                 : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700'}`}
                         >
-                            {showAnalytics ? <LayoutDashboard className="h-5 w-5 mr-2" /> : <BarChart3 className="h-5 w-5 mr-2" />}
-                            {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
+                            {showAnalytics ? <LayoutDashboard className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} /> : <BarChart3 className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />}
+                            {showAnalytics ? t('hide_analytics') : t('show_analytics')}
                         </Button>
                         <div className="h-10 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block mx-1 self-center"></div>
                         <Button
@@ -280,16 +287,16 @@ const GradeSheetPage: React.FC = () => {
                             onClick={handleExportExcel}
                             className="h-11 px-5 rounded-xl font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30 border-0"
                         >
-                            <FileSpreadsheet className="h-5 w-5 mr-2" />
-                            Export Excel
+                            <FileSpreadsheet className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                            {t('export_excel')}
                         </Button>
                         <Button
                             variant="secondary"
                             onClick={handleExportPDF}
                             className="h-11 px-5 rounded-xl font-medium bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:hover:bg-rose-900/30 border-0"
                         >
-                            <FileText className="h-5 w-5 mr-2" />
-                            Export PDF
+                            <FileText className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                            {t('export_pdf')}
                         </Button>
                         <Button
                             variant="primary"
@@ -297,8 +304,8 @@ const GradeSheetPage: React.FC = () => {
                             isLoading={isPublishing}
                             className="h-11 px-6 rounded-xl font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none border-0"
                         >
-                            <Send className="h-5 w-5 mr-2" />
-                            Publish All
+                            <Send className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                            {t('publish_all')}
                         </Button>
                     </div>
                 </div>
@@ -322,32 +329,32 @@ const GradeSheetPage: React.FC = () => {
             {/* Premium Stat Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
                 <StatCard
-                    label="Total Students"
+                    label={t('total_students')}
                     value={stats.total}
                     icon={Users}
-                    trendLabel="Enrolled"
+                    trendLabel={t('enrolled')}
                     color="blue"
                 />
                 <StatCard
-                    label="Average Score"
+                    label={t('average_score')}
                     value={`${stats.average}%`}
                     icon={Award}
-                    trendLabel="Class Average"
+                    trendLabel={t('class_average')}
                     color="yellow"
                 />
                 <StatCard
-                    label="Pass Rate"
+                    label={t('pass_rate')}
                     value={`${stats.passRate}%`}
                     icon={TrendingUp}
-                    trendLabel={`${stats.passed} Passed`}
+                    trendLabel={`${stats.passed} ${t('passed_count')}`}
                     trendPositive={true}
                     color="emerald"
                 />
                 <StatCard
-                    label="Fail Rate"
+                    label={t('fail_rate')}
                     value={`${(100 - stats.passRate).toFixed(1)}%`}
                     icon={XCircle}
-                    trendLabel={`${stats.failed} Failed`}
+                    trendLabel={`${stats.failed} ${t('failed_count')}`}
                     trendPositive={false}
                     color="rose"
                 />
@@ -360,13 +367,15 @@ const GradeSheetPage: React.FC = () => {
 
                     <div className="flex items-center gap-4 flex-1 w-full md:w-auto">
                         <div className="relative flex-1 md:max-w-md">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                            <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400`} />
                             <input
                                 type="text"
-                                placeholder="Search by name or ID..."
+                                placeholder={t('search_by_name_id')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm font-medium"
+                                className={`w-full pr-4 py-2.5 rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm font-medium ${
+                                    isRTL ? 'pr-10' : 'pl-10'
+                                }`}
                             />
                         </div>
                     </div>
@@ -377,13 +386,13 @@ const GradeSheetPage: React.FC = () => {
                                 onClick={() => setStatusFilter('all')}
                                 className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'all' ? 'bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
-                                All Status
+                                {t('all_status')}
                             </button>
                             <button
                                 onClick={() => setStatusFilter('published')}
                                 className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${statusFilter === 'published' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                             >
-                                Published
+                                {t('published')}
                             </button>
                         </div>
 
@@ -394,9 +403,9 @@ const GradeSheetPage: React.FC = () => {
                             onChange={(e) => setGradeFilter(e.target.value as any)}
                             className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm cursor-pointer"
                         >
-                            <option value="all">All Grades</option>
-                            <option value="pass">Passing</option>
-                            <option value="fail">Failing</option>
+                            <option value="all">{t('all_grades')}</option>
+                            <option value="pass">{t('passing_status')}</option>
+                            <option value="fail">{t('failing_status')}</option>
                         </select>
                     </div>
                 </div>
@@ -406,12 +415,12 @@ const GradeSheetPage: React.FC = () => {
                     <table className="w-full">
                         <thead>
                             <tr className="bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-700">
-                                <th className="px-6 py-5 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student</th>
-                                <th className="px-6 py-5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Score</th>
-                                <th className="px-6 py-5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Performance</th>
-                                <th className="px-6 py-5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Grade</th>
-                                <th className="px-6 py-5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-5 text-right text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                                <th className={`px-6 py-5 ${isRTL ? 'text-right' : 'text-left'} text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}>{t('table_student')}</th>
+                                <th className="px-6 py-5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('table_score')}</th>
+                                <th className="px-6 py-5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('table_performance')}</th>
+                                <th className="px-6 py-5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('table_grade')}</th>
+                                <th className="px-6 py-5 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('table_status')}</th>
+                                <th className={`px-6 py-5 ${isRTL ? 'text-left' : 'text-right'} text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}>{t('table_actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
@@ -433,8 +442,8 @@ const GradeSheetPage: React.FC = () => {
                                             <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
                                                 <Search className="h-8 w-8 text-slate-300 dark:text-slate-600" />
                                             </div>
-                                            <p className="text-lg font-medium text-slate-900 dark:text-white">No students found</p>
-                                            <p className="text-slate-500 text-sm mt-1">Adjust your fitlers to see results.</p>
+                                            <p className="text-lg font-medium text-slate-900 dark:text-white">{t('no_students_found')}</p>
+                                            <p className="text-slate-500 text-sm mt-1">{t('adjust_filters_desc')}</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -460,6 +469,9 @@ const GradeSheetPage: React.FC = () => {
 
 // Premium Stat Card
 const StatCard = ({ label, value, icon: Icon, trendLabel, trendPositive, color }: any) => {
+    const { dir } = useLanguage();
+    const isRTL = dir === 'rtl';
+    
     const colorStyles = {
         blue: { bg: 'bg-blue-50 dark:bg-blue-900/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-100 dark:border-blue-800' },
         emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/10', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-100 dark:border-emerald-800' },
@@ -475,27 +487,27 @@ const StatCard = ({ label, value, icon: Icon, trendLabel, trendPositive, color }
             animate={{ opacity: 1, y: 0 }}
             className={`bg-white dark:bg-slate-900 p-6 rounded-2xl border ${style.border} shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow`}
         >
-            <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity`}>
-                <Icon className={`h-16 w-16 ${style.text}`} />
-            </div>
+            <div className={`absolute top-0 ${isRTL ? 'left-0' : 'right-0'} p-4 opacity-10 group-hover:opacity-20 transition-opacity`}>
+                                <Icon className={`h-16 w-16 ${style.text}`} />
+                            </div>
 
-            <div className="relative">
-                <div className="flex items-center gap-3 mb-2">
-                    <div className={`p-2 rounded-lg ${style.bg}`}>
-                        <Icon className={`h-5 w-5 ${style.text}`} />
-                    </div>
-                    <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</p>
-                </div>
-                <div className="flex items-end gap-3">
-                    <h3 className="text-3xl font-bold text-slate-900 dark:text-white">{value}</h3>
-                    {trendLabel && (
-                        <div className={`flex items-center text-xs font-semibold px-2 py-1 rounded-full mb-1 ${trendPositive === true ? 'bg-emerald-100 text-emerald-700' : trendPositive === false ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'}`}>
-                            {trendPositive === true ? <ArrowUpRight className="h-3 w-3 mr-1" /> : trendPositive === false ? <ArrowDownRight className="h-3 w-3 mr-1" /> : null}
-                            {trendLabel}
-                        </div>
-                    )}
-                </div>
-            </div>
+                            <div className="relative">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className={`p-2 rounded-lg ${style.bg}`}>
+                                        <Icon className={`h-5 w-5 ${style.text}`} />
+                                    </div>
+                                    <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</p>
+                                </div>
+                                <div className="flex items-end gap-3">
+                                    <h3 className="text-3xl font-bold text-slate-900 dark:text-white">{value}</h3>
+                                    {trendLabel && (
+                                        <div className={`flex items-center text-xs font-semibold px-2 py-1 rounded-full mb-1 ${trendPositive === true ? 'bg-emerald-100 text-emerald-700' : trendPositive === false ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'}`}>
+                                            {trendPositive === true ? <ArrowUpRight className={`h-3 w-3 ${isRTL ? 'ml-1' : 'mr-1'}`} /> : trendPositive === false ? <ArrowDownRight className={`h-3 w-3 ${isRTL ? 'ml-1' : 'mr-1'}`} /> : null}
+                                            {trendLabel}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
         </motion.div>
     );
 };
@@ -503,6 +515,8 @@ const StatCard = ({ label, value, icon: Icon, trendLabel, trendPositive, color }
 // Premium Grade Row
 const GradeRow: React.FC<{ grade: Grade; index: number; onView: () => void; onDelete: () => void; onPublish: () => void }> = ({ grade, index, onView, onDelete, onPublish }) => {
     const isPassing = grade.percentage >= 60;
+    const { t, dir } = useLanguage();
+    const isRTL = dir === 'rtl';
 
     // Generate initials
     const initials = grade.studentName
@@ -559,30 +573,30 @@ const GradeRow: React.FC<{ grade: Grade; index: number; onView: () => void; onDe
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-center">
                 <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${grade.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                    {grade.status}
+                    {t(grade.status)}
                 </span>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-right flex items-center justify-end gap-2">
+            <td className={`px-6 py-4 whitespace-nowrap ${isRTL ? 'text-left' : 'text-right'} flex items-center justify-end gap-2`}>
                 <button
                     onClick={onPublish}
                     className={`p-2.5 rounded-xl transition-all shadow-sm hover:shadow ${grade.status === 'published' 
                         ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40' 
                         : 'text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/40'}`}
-                    title={grade.status === 'published' ? 'Unpublish Result' : 'Publish Result'}
+                    title={grade.status === 'published' ? t('unpublish_result') : t('publish_result')}
                 >
                     {grade.status === 'published' ? <Check className="h-5 w-5" /> : <Send className="h-5 w-5" />}
                 </button>
                 <button
                     onClick={onView}
                     className="p-2.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:hover:bg-indigo-900/40 rounded-xl transition-all shadow-sm hover:shadow"
-                    title="View Detailed Analysis"
+                    title={t('view_detailed_analysis')}
                 >
                     <Eye className="h-5 w-5" />
                 </button>
                 <button
                     onClick={onDelete}
                     className="p-2.5 text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-xl transition-all shadow-sm hover:shadow"
-                    title="Delete Record"
+                    title={t('delete_record')}
                 >
                     <Trash2 className="h-5 w-5" />
                 </button>

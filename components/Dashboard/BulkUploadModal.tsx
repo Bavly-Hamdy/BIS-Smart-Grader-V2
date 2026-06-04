@@ -7,6 +7,7 @@ import { db } from '../../firebase/firebaseConfig';
 import { uploadImageToCloudinary } from '../../services/cloudinaryService';
 import { extractStudentInfo } from '../../services/geminiGradingService';
 import Button from '../Button';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface BulkUploadModalProps {
     examId: string;
@@ -35,6 +36,8 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     onClose,
     onComplete
 }) => {
+    const { t, language, dir } = useLanguage();
+    const isRTL = language === 'ar';
     const [files, setFiles] = useState<UploadFile[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -189,7 +192,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
         const filesWithStudents = files.filter(f => f.studentId && f.status === 'pending');
 
         if (filesWithStudents.length === 0) {
-            alert('Please assign students to all files before uploading');
+            alert(t('assign_students_error'));
             return;
         }
 
@@ -246,13 +249,14 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
                     className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+                    dir={dir}
                 >
                     {/* Header */}
                     <div className="p-6 border-b border-slate-200 dark:border-slate-800">
                         <div className="flex items-center justify-between">
                             <div>
                                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                                    رفع أوراق الإجابة / Upload Answer Sheets
+                                    {t('upload_answer_sheets')}
                                 </h2>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                                     {examTitle}
@@ -283,10 +287,10 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                             >
                                 <Upload className="h-12 w-12 mx-auto text-slate-400 mb-4" />
                                 <p className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-                                    Drop Answer Sheets Here
+                                    {t('drop_sheets_here')}
                                 </p>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                                    or click to browse files
+                                    {t('or_click_to_browse')}
                                 </p>
                                 <input
                                     type="file"
@@ -298,12 +302,12 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                                 />
                                 <label htmlFor="file-input">
                                     <Button type="button" onClick={() => document.getElementById('file-input')?.click()}>
-                                        <FileImage className="h-5 w-5 mr-2" />
-                                        Select Files
+                                        <FileImage className={`h-5 w-5 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                                        {t('select_files')}
                                     </Button>
                                 </label>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-4">
-                                    Supported: JPG, PNG, PDF • Max 5MB per file
+                                    {t('supported_formats_hint')}
                                 </p>
                             </div>
                         )}
@@ -312,7 +316,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                         {files.length > 0 && (
                             <div className="space-y-3">
                                 <h3 className="font-semibold text-slate-900 dark:text-white">
-                                    Files ({files.length})
+                                    {t('files_count')} ({files.length})
                                 </h3>
                                 {files.map((file, index) => {
                                     const isSameAsPrev = index > 0 && file.studentId && file.studentId === files[index - 1].studentId;
@@ -321,10 +325,10 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                                     return (
                                         <div key={file.id} className="relative">
                                             {isSameAsPrev && (
-                                                <div className="absolute -top-3 left-8 z-10 flex items-center gap-2">
+                                                <div className={`absolute -top-3 ${isRTL ? 'right-8' : 'left-8'} z-10 flex items-center gap-2`}>
                                                     <div className="h-6 w-0.5 bg-indigo-500 rounded-full" />
                                                     <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 flex items-center gap-1">
-                                                        <LinkIcon className="h-2.5 w-2.5" /> Grouped with Page {index}
+                                                        <LinkIcon className="h-2.5 w-2.5" /> {t('grouped_with_page')} {index}
                                                     </span>
                                                 </div>
                                             )}
@@ -356,7 +360,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                             disabled={isUploading}
                             className="flex-1"
                         >
-                            {allUploaded ? 'Close' : 'Cancel'}
+                            {allUploaded ? t('close') : t('cancel')}
                         </Button>
                         {!allUploaded && (
                             <Button
@@ -365,7 +369,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                                 isLoading={isUploading}
                                 className="flex-1"
                             >
-                                Upload All ({files.filter(f => f.studentId).length}/{files.length})
+                                {t('upload_all')} ({files.filter(f => f.studentId).length}/{files.length})
                             </Button>
                         )}
                     </div>
@@ -385,6 +389,8 @@ interface FileCardProps {
 }
 
 const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, onCopyFromPrevious, disabled, isGrouped }) => {
+    const { t, language } = useLanguage();
+    const isRTL = language === 'ar';
     return (
         <div className={`rounded-lg p-4 transition-all ${isGrouped ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-l-4 border-indigo-500' : 'bg-slate-50 dark:bg-slate-800'}`}>
             <div className="flex items-start gap-4">
@@ -414,13 +420,13 @@ const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, on
                             {file.isExtracting ? (
                                 <div className="flex items-center gap-2 text-sm text-primary">
                                     <Loader2 className="h-4 w-4 animate-spin" />
-                                    <span>AI is detecting Student Info...</span>
+                                    <span>{t('ai_detecting_info')}</span>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <input
                                         type="text"
-                                        placeholder="Enter Student ID"
+                                        placeholder={t('enter_student_id')}
                                         value={file.studentId || ''}
                                         onChange={(e) => {
                                             onStudentAssign(e.target.value, file.studentName || '');
@@ -430,7 +436,7 @@ const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, on
                                     />
                                     <input
                                         type="text"
-                                        placeholder="Enter Student Name"
+                                        placeholder={t('enter_student_name')}
                                         value={file.studentName || ''}
                                         onChange={(e) => {
                                             onStudentAssign(file.studentId || '', e.target.value);
@@ -441,7 +447,7 @@ const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, on
                                     {file.studentName && file.studentId && (
                                         <div className="sm:col-span-2 flex items-center justify-between">
                                             <p className="text-[10px] text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded inline-block">
-                                                Verified: {file.studentName} ({file.studentId})
+                                                {t('verified_student')}: {file.studentName} ({file.studentId})
                                             </p>
                                             {onCopyFromPrevious && (
                                                 <button
@@ -449,7 +455,7 @@ const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, on
                                                     onClick={onCopyFromPrevious}
                                                     className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
                                                 >
-                                                    <Copy className="h-3 w-3" /> Same as above
+                                                    <Copy className="h-3 w-3" /> {t('same_as_above')}
                                                 </button>
                                             )}
                                         </div>
@@ -461,7 +467,7 @@ const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, on
                                                 onClick={onCopyFromPrevious}
                                                 className="text-xs text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 px-2 py-1 rounded border border-indigo-100 dark:border-indigo-800 flex items-center gap-1 w-fit mt-1"
                                             >
-                                                <Copy className="h-3 w-3" /> Copy student from previous page
+                                                <Copy className="h-3 w-3" /> {t('copy_student_prev')}
                                             </button>
                                         </div>
                                     )}
@@ -491,7 +497,7 @@ const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, on
                     {file.status === 'success' && (
                         <div className="mt-2 flex items-center gap-2 text-green-600 dark:text-green-400">
                             <Check className="h-4 w-4" />
-                            <span className="text-xs font-medium">Uploaded</span>
+                            <span className="text-xs font-medium">{t('uploaded_status')}</span>
                         </div>
                     )}
 
