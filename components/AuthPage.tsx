@@ -20,6 +20,7 @@ import { auth, db } from '../firebase/firebaseConfig';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 // @ts-ignore - fix for exported member error
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import logoIcon from '../public/logo-icon.png';
 
 type AuthMode = 'login' | 'register';
 
@@ -169,12 +170,17 @@ const AuthPage: React.FC = () => {
               className="flex items-center gap-3 cursor-pointer mb-8"
               onClick={() => navigate('/')}
             >
-              <div className="bg-white/10 p-2.5 rounded-xl backdrop-blur-md border border-white/10 shadow-lg ring-1 ring-white/20">
-                <GraduationCap className="h-7 w-7 text-violet-200" />
+              <img
+                src={logoIcon}
+                alt="E-Written Logo"
+                className="h-14 w-14 object-contain flex-shrink-0 brightness-0 invert opacity-90"
+              />
+              <div className="flex flex-col leading-none">
+                <span className="font-extrabold text-2xl tracking-tight text-white/90">
+                  E-<span className="text-violet-300">Written</span>
+                </span>
+                <span className="text-[11px] font-medium text-white/50 tracking-wide mt-0.5">From Handwriting to Smart Grading</span>
               </div>
-              <span className="font-bold text-2xl tracking-tight text-white/90">
-                E- <span className="text-violet-300">Written</span>
-              </span>
             </motion.div>
 
             <button

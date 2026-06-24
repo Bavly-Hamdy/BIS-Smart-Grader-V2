@@ -57,7 +57,7 @@ const Hero: React.FC = () => {
             </motion.h1>
 
             <motion.p variants={itemVariants} className="text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-              Automate assessment with the E-Written. We combine Gemini's reasoning with OCR to grade handwritten English exams with 99% accuracy.
+              From Handwriting to Smart Grading — E-Written combines Gemini AI reasoning with advanced OCR to assess handwritten English exams with 99% accuracy.
             </motion.p>
 
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">

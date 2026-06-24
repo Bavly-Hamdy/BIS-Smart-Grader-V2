@@ -23,6 +23,7 @@ import { FacultyProfile, Notification } from '../../types';
 import { fetchNotifications } from '../../services/notificationService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
+import logoIcon from '../../public/logo-icon.png';
 
 const DashboardLayout: React.FC = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -86,13 +87,17 @@ const DashboardLayout: React.FC = () => {
       <aside className="hidden md:flex flex-col w-72 bg-white dark:bg-slate-900 border-e border-slate-200 dark:border-slate-800 fixed inset-y-0 start-0 z-20 shadow-sm">
         <div className="p-6">
           <div className="flex items-center gap-3 px-2">
-            <div className="bg-gradient-to-tr from-primary to-blue-600 dark:from-blue-600 dark:to-blue-400 p-2.5 rounded-xl shadow-lg shadow-blue-500/20">
-              <LayoutDashboard className="h-6 w-6 text-white" />
-            </div>
+            <img
+              src={logoIcon}
+              alt="E-Written Logo"
+              className="h-10 w-10 object-contain flex-shrink-0"
+            />
             <div>
-              <span className="font-bold text-xl text-slate-900 dark:text-white tracking-tight block">E-WRITTEN</span>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
-                {t('faculty_space')}
+              <span className="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight block">
+                E-<span className="text-primary dark:text-blue-400">Written</span>
+              </span>
+              <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 tracking-wide leading-none">
+                From Handwriting to Smart Grading
               </span>
             </div>
           </div>
@@ -391,7 +396,16 @@ const DashboardLayout: React.FC = () => {
                 className={`fixed inset-y-0 ${isRTL ? 'right-0' : 'left-0'} w-72 bg-white dark:bg-slate-900 z-50 md:hidden flex flex-col`}
               >
                 <div className="p-6 flex justify-between items-center border-b border-slate-200 dark:border-slate-800">
-                  <span className="font-bold text-lg text-slate-900 dark:text-white">E-WRITTEN</span>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={logoIcon}
+                      alt="E-Written Logo"
+                      className="h-8 w-8 object-contain flex-shrink-0"
+                    />
+                    <span className="font-extrabold text-base text-slate-900 dark:text-white">
+                      E-<span className="text-primary dark:text-blue-400">Written</span>
+                    </span>
+                  </div>
                   <button onClick={() => setSidebarOpen(false)}>
                     <X className="h-6 w-6 text-slate-500" />
                   </button>

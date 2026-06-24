@@ -14,6 +14,7 @@ import NewsCard from './NewsCard';
 import ScrollToTop from './ScrollToTop';
 // @ts-ignore - fix for exported member error
 import { useNavigate } from 'react-router-dom';
+import logoIcon from '../public/logo-icon.png';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ const LandingPage: React.FC = () => {
             {...fadeInUp}
             className="text-center mb-16"
           >
-            <h2 className="text-primary dark:text-blue-400 font-semibold text-sm uppercase tracking-wide mb-2">Why Choose E-WRITTEN?</h2>
+            <h2 className="text-primary dark:text-blue-400 font-semibold text-sm uppercase tracking-wide mb-2">Why Choose E-Written?</h2>
             <h3 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Advanced features for modern faculty</h3>
           </motion.div>
 
@@ -164,9 +165,19 @@ const LandingPage: React.FC = () => {
       <footer className="bg-slate-900 dark:bg-slate-950 text-slate-400 py-12 border-t border-slate-800 snap-start">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
-            <span className="font-bold text-xl text-white tracking-tight">
-              E- <span className="text-primary dark:text-blue-400">Written</span>
-            </span>
+            <div className="flex items-center gap-3">
+              <img
+                src={logoIcon}
+                alt="E-Written Logo"
+                className="h-10 w-10 object-contain flex-shrink-0 brightness-0 invert opacity-70"
+              />
+              <div>
+                <span className="font-extrabold text-xl text-white tracking-tight block">
+                  E-<span className="text-primary dark:text-blue-400">Written</span>
+                </span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-500 tracking-wide">From Handwriting to Smart Grading</span>
+              </div>
+            </div>
           </div>
           <div className="text-sm">
             &copy; 2025 BIS Faculty, Assiut University. All rights reserved.

@@ -391,38 +391,35 @@ const DashboardHome: React.FC = () => {
               <p className="text-sm text-slate-500">{t('pass_fail_ratio')}</p>
             </div>
           </div>
-          <div className="h-72 w-full flex items-center justify-center relative" dir="ltr">
+          <div className="h-72 flex items-center justify-center relative">
             {grades.length > 0 ? (
-              <div className="bg-white/80 dark:bg-white/90 backdrop-blur-md border border-white shadow-lg shadow-slate-200/50 dark:shadow-none rounded-2xl p-6 flex flex-col items-center justify-center w-60 h-60 relative group hover:shadow-xl transition-all duration-300">
-                <div className="w-36 h-36 relative">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={65}
-                        paddingAngle={5}
-                        dataKey="value"
-                        cornerRadius={6}
-                        className="overflow-visible"
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
-                        ))}
-                      </Pie>
-                      <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" dir={isRTL ? 'rtl' : 'ltr'}>
-                    <span className="text-3xl font-bold text-slate-900 tracking-tight">
-                      {((passCount / grades.length) * 100).toFixed(0)}%
-                    </span>
-                    <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-0.5">{t('pass_rate')}</span>
-                  </div>
+              <>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={80}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                      cornerRadius={6}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                    {((passCount / grades.length) * 100).toFixed(0)}%
+                  </span>
+                  <span className="text-xs uppercase tracking-widest text-slate-500 font-semibold">{t('pass_rate')}</span>
                 </div>
-              </div>
+              </>
             ) : (
               <div className="h-full w-full flex flex-col items-center justify-center text-slate-400 text-sm bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
                 <AlertTriangle className="h-10 w-10 mb-2 opacity-50" />

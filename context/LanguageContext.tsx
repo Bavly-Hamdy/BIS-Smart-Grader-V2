@@ -328,11 +328,7 @@ const translations: Translations = {
         'email_notifications_disabled': 'Email notifications disabled',
         'push_notifications_disabled': 'Push notifications disabled',
         'password_reset_sent': 'Password reset link sent to {email}',
-        'sign_out_success': 'Signed out successfully',
-        'account_created_success': 'Account created successfully! Please sign in with your credentials.',
-        'enter_email_first': 'Please enter your university email first.',
-        'email_invalid_domain': 'Please use your official university email (*.edu.eg).',
-        'forgot_password': 'Forgot password?'
+        'sign_out_success': 'Signed out successfully'
     },
     ar: {
         // Sidebar
@@ -653,11 +649,7 @@ const translations: Translations = {
         'email_notifications_disabled': 'تم تعطيل إشعارات البريد الإلكتروني',
         'push_notifications_disabled': 'تم تعطيل الإشعارات الفورية',
         'password_reset_sent': 'تم إرسال رابط إعادة تعيين كلمة المرور إلى {email}',
-        'sign_out_success': 'تم تسجيل الخروج بنجاح',
-        'account_created_success': 'تم إنشاء الحساب بنجاح! يرجى تسجيل الدخول باستخدام بيانات الاعتماد الخاصة بك.',
-        'enter_email_first': 'الرجاء إدخال البريد الإلكتروني الجامعي أولاً.',
-        'email_invalid_domain': 'الرجاء استخدام البريد الإلكتروني الجامعي الرسمي (*.edu.eg).',
-        'forgot_password': 'هل نسيت كلمة المرور؟'
+        'sign_out_success': 'تم تسجيل الخروج بنجاح'
     },
 };
 

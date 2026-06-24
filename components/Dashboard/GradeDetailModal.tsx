@@ -84,7 +84,7 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
         if (!grade.id) return;
         try {
             setIsSavingScore(true);
-            const percentage = grade.maxScore > 0 ? (editedScore / grade.maxScore) * 100 : 0;
+            const percentage = (editedScore / grade.maxScore) * 100;
             const letter = calculateLetterGrade(percentage);
 
             await updateDoc(doc(db, 'grades', grade.id), {

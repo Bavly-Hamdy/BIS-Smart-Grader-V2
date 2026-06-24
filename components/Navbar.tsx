@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 // @ts-ignore - fix for exported member error
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, GraduationCap, Sun, Moon } from 'lucide-react';
+import { Menu, X, Sun, Moon } from 'lucide-react';
 import Button from './Button';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
+import logoIcon from '../public/logo-icon.png';
 
 interface NavbarProps {
   customScrolled?: boolean;
@@ -85,15 +86,20 @@ const Navbar: React.FC<NavbarProps> = ({ customScrolled, activeSection, onNaviga
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div
-            className="flex-shrink-0 flex items-center cursor-pointer"
+            className="flex-shrink-0 flex items-center cursor-pointer gap-3"
             onClick={() => handleNavClick('home')}
           >
-            <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-lg mr-3">
-              <GraduationCap className="h-6 w-6 text-primary dark:text-blue-400" />
+            <img
+              src={logoIcon}
+              alt="E-Written Logo"
+              className="h-10 w-10 object-contain flex-shrink-0"
+            />
+            <div className="flex flex-col leading-none">
+              <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">
+                E-<span className="text-primary dark:text-blue-400">Written</span>
+              </span>
+              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 tracking-wide">From Handwriting to Smart Grading</span>
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
-              E- <span className="text-primary dark:text-blue-400">Written</span>
-            </span>
           </div>
 
           {/* Desktop Navigation */}
