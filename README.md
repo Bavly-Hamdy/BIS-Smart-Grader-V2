@@ -1,337 +1,220 @@
-# 🚀 E-WIRRETN: BIS Smart Grader V2
+# E-Written: BIS Smart Grader V2
 
-An enterprise-grade, AI-driven automated grading & assessment SaaS platform tailored for Business Information Systems (BIS) curriculums. The platform automates student answer sheet ingestion, extracts metadata, evaluates handwriting against multi-modal model answers, and aggregates visual academic analytics.
+E-Written is an automated grading and academic analytics platform built specifically for the Business Information Systems (BIS) department at Assiut University. It bridges the gap between traditional paper exams and digital academic tracking by utilizing AI vision models to transcribe, grade, and analyze handwritten student scripts.
 
----
-
-## 1. Platform Vision & Problem Statement
-
-### The Academic Challenge in BIS Curriculums
-The Business Information Systems (BIS) department at modern universities operates at the intersection of business intelligence, systems engineering, and management science. Managing courses within this curriculum requires a complex balance of quantitative testing (programming, database management, systems analysis) and qualitative analysis (business strategies, management theories, information systems auditing).
-
-Traditionally, grading hundreds of student scripts during midterm and final examination cycles introduces significant challenges:
-1.  **Administrative Bottlenecks**: Instructors manually parse, sort, and record scores for hundreds of physical sheets, delaying grade submission cycles.
-2.  **Grading Inconsistencies**: Evaluation criteria can fluctuate due to fatigue, leading to discrepancies across large student batches.
-3.  **Absence of Analytics**: Physical papers offer no data aggregation. Faculty members lack real-time visibility into performance curves, failure distributions, or concept mastery metrics, preventing immediate curriculum adjustments.
-
-### The E-WIRRETN Solution
-**E-WIRRETN** (also referred to as *E-Written* / *BIS Smart Grader V2*) resolves these administrative challenges by combining state-of-the-art vision-based generative AI with a serverless, real-time SaaS platform. The system ingests scanned physical scripts, performs metadata extraction, grades handwriting against multi-modal references, and yields instant visual reports.
+The platform handles the entire grading pipeline: scanning script sheets, uploading assets through optimized CDNs, extracting student metadata, evaluating answers against multi-modal grading keys using Gemini, and exporting official academic ledgers in Excel and PDF formats.
 
 ---
 
-## 2. Comprehensive System Features & Implementation Details
+## 🛠️ Tech Stack & Key Integrations
 
-### 1. Interactive Landing Page & Promotional Front-End
-*   **Logical Modules**: `components/LandingPage.tsx`, `components/Navbar.tsx`, `components/Hero.tsx`, `components/DemoSection.tsx`, `components/NewsCard.tsx`, `components/ScrollToTop.tsx`.
-*   **Visual Structure**:
-    *   *Glassmorphism & Gradients*: Leverages semi-transparent cards (`backdrop-blur-md bg-white/10`) with deep border contrast, soft shadows, and dynamic gradient backgrounds to give a premium SaaS feel.
-    *   *Interactive Demo Console*: A live simulator widget where users can click between mock handwritten answers and view how the AI extracts metadata (Student ID, Name) and scores them in real-time against model keys.
-    *   *Micro-interactions*: Driven by Framer Motion, page elements slide in on scroll, and buttons scale smoothly on hover/press.
-
-### 2. University-Scoped Session Gateways
-*   **Logical Modules**: `components/AuthPage.tsx`, `components/RequireAuth.tsx`.
-*   **Security Controls**:
-    *   *Email Suffix Whitelisting*: The registration controller validates that input emails end with `*.edu.eg` or `*.aun.edu.eg` before invoking Firebase Auth signup endpoints.
-    *   *Session Persistence*: Leverages Firebase Authentication state observers (`onAuthStateChanged`) to persist session states across client-side refreshes.
-    *   *Route Protection Guard*: The `RequireAuth` component wraps private routes, validating active session tokens and redirecting unauthorized traffic to login.
-
-### 3. Multi-Tenant Navigation Drawer Shell
-*   **Logical Modules**: `components/Dashboard/DashboardLayout.tsx`, `services/notificationService.ts`.
-*   **UI/UX Mechanics**:
-    *   *RTL/LTR Translation Dictionary*: Synchronizes layout shifts with language preferences. Sidebars, grids, icons, and menus dynamically mirror structure when shifting Arabic/English locale states.
-    *   *Realtime Alerts Counter*: Connects to Firestore notifications listener, displaying dynamic unread count badges over notifications icons.
-    *   *Responsive Toggle Triggers*: Adapts layouts dynamically across mobile devices, tablets, and desktop dimensions.
-
-### 4. Analytic Metrics Dashboard (Overview)
-*   **Logical Modules**: `components/Dashboard/DashboardHome.tsx`, `components/Dashboard/GradeAnalytics.tsx`.
-*   **Analytics Capabilities**:
-    *   *KPI Counters Matrix*: Tracks overall registered courses counts, active student profiles, average graded scores, and assessment totals.
-    *   *Dynamic Analytics Graphs*: Renders interactive SVG visual reports utilizing Recharts:
-        *   `Performance Trend Curve`: Area graph rendering class average grade shifts across consecutive exam cycles.
-        *   `Grade Distribution Chart`: Bar/Pie diagrams grouping student scores into standard academic grade bounds (A, B, C, D, F).
-    *   *Action Warnings Feed*: Aggregates prioritized warnings, alert prompts, and system actions:
-        *   Exams missing model answers.
-        *   Ungraded submission queues.
-        *   At-risk students profiling (scores dropping under 60%).
-
-### 5. Curriculum & Grading Schemes Manager (My Courses)
-*   **Logical Modules**: `components/Dashboard/CourseManagement.tsx`, `components/Dashboard/EditCourseModal.tsx`, `components/Dashboard/CourseDetail.tsx`, `components/Dashboard/CourseCard.tsx`.
-*   **Academic Workflows**:
-    *   *Dynamic Grading Schemes Editor*: Instructors can customize grade weights (Midterm %, Final %, Classwork %, Practical Labs %, Project %) totaling 100%. Ensures all assignments obey these schemas during grade compilation.
-    *   *BIS Dynamic Syllabus Catalog*: Search-friendly autocompletion tool utilizing `utils/bisCurriculum.ts`, synchronizing metadata inputs with official Assiut University BIS Curriculum criteria (Course Code, Arabic Title, English Title, Weekly Lecture/Lab distribution).
-    *   *Performance Roster*: Lists enrolled student profiles alongside course-specific averages and grade statistics.
-
-### 6. Assessment & Model Answer Hub (Exams Manager)
-*   **Logical Modules**: `components/Dashboard/ExamManagement.tsx`, `components/Dashboard/CreateExamModal.tsx`, `components/Dashboard/ExamDetail.tsx`, `components/Dashboard/ExamCard.tsx`.
-*   **Exam Customization**:
-    *   *Scheduling Controls*: Manages scheduling dates, durations, and locking options.
-    *   *Model Answer Ingestion*: Instructors can configure model answers as Markdown texts, scanned reference images, or PDF keys.
-    *   *Ingestion Monitoring Panel*: Displays lists of uploaded student scripts, processing states (`pending`, `processing`, `graded`), confidence logs, and final scores.
-
-### 7. Scanned Script Ingestion & AI Evaluator
-*   **Logical Modules**: `components/Dashboard/BulkUploadModal.tsx`, `services/geminiGradingService.ts`, `services/cloudinaryService.ts`, `components/Dashboard/GradeDetailModal.tsx`.
-*   **Vision Processing pipeline**:
-    *   *Cloudinary Asset Pipeline*: Processes scanned student papers, resizes image sizes (max width of `1024px`), and uploads them to the CDN.
-    *   *Gemini Vision Ingestion*: Decouples grading request payloads to invoke the `gemini-2.5-flash` model under strict JSON schema options.
-    *   *Grading Breakdown View*: Interactive overlay showing marked correct points, missed key concepts, AI confidence, and handwriting OCR validation checks.
-
-### 8. Interactive Grade Ledger Spreadsheet
-*   **Logical Modules**: `components/Dashboard/GradeSheet.tsx`, `components/Dashboard/StudentList.tsx`, `components/Dashboard/StudentDetail.tsx`.
-*   **Data Aggregation**:
-    *   *Real-time Grade Adjustment Ledger*: Cell-level modifications are saved directly to Firestore, recalculating class averages and standard distributions on the fly.
-    *   *Roster Search Filters*: Autocomplete filtering inputs by Student ID, Student Name, Course, or Grade boundaries.
-
-### 9. Multi-Format Academic Document Exporters
-*   **Logical Modules**: `services/exportService.ts`.
-*   **Report Generation**:
-    *   *Analytical Excel Workbook*: Generates structured sheets containing student name lists, seat numbers, raw scores, letter boundaries, and class performance averages.
-    *   *Official PDF Report Sheet*: Outputs printable PDF report sheets with school letterheads, course summaries, average marks, and grade curves.
+* **Frontend Framework:** React 18, Vite, TypeScript, Tailwind CSS, Framer Motion (for interface transitions).
+* **Database & Auth:** Firebase (Authentication, Cloud Firestore real-time listeners).
+* **AI Evaluation Engine:** Google Gemini 2.5 Flash (utilizing structured JSON schema outputs).
+* **Asset Pipeline:** Cloudinary REST API (asynchronous image uploads with client-side progress tracking).
+* **Document Generation:** `xlsx` (Excel grade sheets) and `jsPDF` / `jspdf-autotable` (examiner-signed report cards).
 
 ---
 
-## 3. Complete Technical Architecture & Data Flow
+## 🏗️ System Architecture & Data Lifecycle
 
-### The Lifecycle of a Submission
-The platform orchestrates image transformations, AI grading requests, and database transactions in a sequential data lifecycle:
+The application operates as a serverless Single Page Application (SPA). Instead of introducing local state synchronization libraries (like Redux or Zustand) which can drift from the server state, E-Written binds components directly to Firestore collections via real-time `onSnapshot` listeners. 
 
-```text
-                                  ┌──────────────────────────┐
-                                  │   Faculty Dashboard UI   │
-                                  └─────────────┬────────────┘
-                                                │
-                                                │ (1) Ingest scanned paper image
-                                                ▼
-                                  ┌──────────────────────────┐
-                                  │   Cloudinary Service     │
-                                  └─────────────┬────────────┘
-                                                │
-                                                │ (2) Store, optimize & crop
-                                                ▼
-                                  ┌──────────────────────────┐
-                                  │    Secure CDN URL        │
-                                  └─────────────┬────────────┘
-                                                │
-                                                │ (3) Invoke grading controller with model & rubrics
-                                                ▼
-                                  ┌──────────────────────────┐
-                                  │  Gemini Service (AI Core)│
-                                  └─────────────┬────────────┘
-                                                │
-                                                │ (4) OCR extraction + comparison via gemini-2.5-flash
-                                                ▼
-                                  ┌──────────────────────────┐
-                                  │  JSON Payload Validation │
-                                  └─────────────┬────────────┘
-                                                │
-                                                │ (5) Structural validation / Error fallback rules
-                                                ▼
-                                  ┌──────────────────────────┐
-                                  │  Firestore Batched Write │
-                                  └─────────────┬────────────┘
-                                                │
-                                                │ (6) Save grades, update status & send notifications
-                                                ▼
-                                  ┌──────────────────────────┐
-                                  │   Cloud Firestore DB     │
-                                  └─────────────┬────────────┘
-                                                │
-                                                │ (7) Real-time socket notification update (onSnapshot)
-                                                ▼
-                                  ┌──────────────────────────┐
-                                  │   Real-Time UI Refresh   │
-                                  └──────────────────────────┘
+### The Journey of a Scanned Exam Sheet
+
+```
+[ Faculty Dashboard ] ──(Upload Image)──> [ Cloudinary API ]
+                                                  │ (Optimize & Resize to 1024px)
+                                                  ▼
+[ Firestore DB ] <──(Save Record)── [ Gemini API Engine ]
+        │                                 ▲ (OCR + Compare with Rubrics)
+        │ (Realtime Sync)                 │
+        ▼                                 │
+[ Live UI Update ] ───────────────────────┘
 ```
 
-### Detailed Lifecycle Steps
-1.  **Ingestion**: The instructor uploads scanned student exam papers via the `BulkUploadModal` or `ExamDetail` components.
-2.  **Asset Offloading**: The `cloudinaryService` receives the image files, uploads them to the Cloudinary CDN, and applies resizing logic to maintain a maximum width of `1024px` for optimal processing speed.
-3.  **AI Engine Invocation**: The `geminiGradingService` is triggered, receiving the Cloudinary student image URL, the model answer data (text, PDF URL, or image URL), the maximum score, and the grading rubrics.
-4.  **Generative Assessment**: The Gemini model parses handwriting and compares it to the model answer, outputting structured grading results.
-5.  **Payload Validation**: The service parses the JSON response, enforces bounds constraints (constraining grades between `0` and the exam's maximum score, and confidence scores between `0.0` and `1.0`), and implements fallback routines if parsing fails.
-6.  **Database Synchronization**: Grading records, student profiles, updated exam submission counts, and user notifications are committed in a batched write transaction to Firestore.
-7.  **Sub-second UI Rendering**: Direct WebSocket connections established via Firestore's `onSnapshot` listener distribute updates instantly across active client views.
-
-### State Orchestration Architecture
-The application layout relies on three core global contexts operating in tandem to handle visual styling, language mapping, and temporary alert states:
-
-*   **`ThemeContext`**: Manages light, dark, and system-level visual states. It attaches classes to the document root element, enabling Tailwind's `dark:` utility styles.
-*   **`LanguageContext`**: Manages localized translations and controls document direction. Changing the language updates the document root structure:
-    *   *Arabic*: Sets `dir="rtl"` and `lang="ar"` on the `html` element.
-    *   *English*: Sets `dir="ltr"` and `lang="en"` on the `html` element.
-*   **`ToastContext`**: Provides non-blocking notifications, presenting visual feedback banners for database modifications, upload failures, and API status alerts.
-
-#### Realtime Firestore Synchronization (`onSnapshot`)
-Rather than relying on heavy client-side state managers like Redux or Zustand, which can lead to local state mismatch, overhead, and state drift from backend resources, E-WIRRETN leverages Firestore's native `onSnapshot` real-time listeners.
-
-This choice provides several architecture advantages:
-1.  **Immediate UI Updates**: Any update in the database (e.g., progress on batch grading) triggers immediate UI refreshes without polling.
-2.  **Local Offline Cache**: Out-of-the-box support for offline read and write queues, ensuring the UI remains responsive during network drops.
-3.  **Simplified Component Design**: Eliminates boilerplate state-synchronization code. Components directly bind to database collections, ensuring consistent rendering across concurrent browser tabs.
+1. **Ingestion & CDN Offloading:** An instructor uploads scanned exam sheets (images or PDFs). The `cloudinaryService` optimizes the image resolution (capping width at `1024px`) and stores the asset securely.
+2. **AI Grading Payload:** The system constructs a multi-modal payload containing the optimized image URL, the model answer (text, PDF, or image key), the rubric configurations, and the exam's maximum score.
+3. **Structured Inference:** Gemini 2.5 Flash processes the handwriting (supporting Arabic and English), extracts the student's name and ID from the paper header, grades the answers, and outputs a strict JSON payload matching our schema constraints.
+4. **Atomic Database Commits:** The resulting grade sheet, parsed student metadata, and AI confidence records are committed in a batched write transaction to Firestore. The live socket listeners immediately update the instructor's dashboard.
 
 ---
 
-## 4. Exhaustive Database Schema Documentation
+## 📂 Repository Topology
 
-The system architecture utilizes Cloud Firestore as its primary data store, with the database schemas documented below:
+Below is the directory layout of the repository, highlighting the restructured modals folder and core integration adapters:
 
-### `faculty` Collection
-Each document stores the profile data of an authenticated academic instructor.
-*   *Document ID*: User's Firebase Auth UID (`request.auth.uid`).
-*   *Schema*:
-    ```typescript
-    interface FacultyProfile {
-      uid: string;              // Unique Identifier (Auth UID)
-      email: string;            // University email address (*.edu.eg domain)
-      fullName: string;         // Instructor's full name
-      department: string;       // Assigned academic department
-      academicRank: string;     // Academic rank ('Professor', 'Associate Professor', etc.)
-      specialization: string;   // Research/teaching specialization field
-      role: 'faculty';          // Static role indicator
-      courses: string[];        // Array of referenced Course IDs
-      photoUrl?: string;        // Optional profile image CDN link
-      createdAt: string;        // ISO-8601 creation timestamp
-      updatedAt: string;        // ISO-8601 update timestamp
-    }
-    ```
-
-### `courses` Collection
-Stores metadata for registered academic courses.
-*   *Document ID*: Auto-generated UUID.
-*   *Schema*:
-    ```typescript
-    interface Course {
-      id: string;               // Unique Course ID
-      code: string;             // Official course code (e.g., 'BIS 101')
-      name: string;             // Course name (English fallback)
-      nameAr?: string;          // Optional Arabic course title
-      nameEn?: string;          // Optional English course title
-      description?: string;     // Short syllabus description
-      creditHours: number;      // Academic credit hours weight
-      theoryHours?: number;     // Assigned weekly theory lecture hours
-      practicalHours?: number;  // Assigned weekly lab practical hours
-      facultyId: string;        // Owner Reference -> faculty.uid
-      semester: string;         // Academic semester (e.g., 'Fall 2026')
-      academicYear: string;     // Academic calendar year (e.g., '2026/2027')
-      gradingScheme: {          // Course grading scheme breakdown
-        final: number;          // Final exam mark weight
-        midterm: number;        // Midterm exam mark weight
-        classWork: number;      // Class activities weight
-        quizzes: number;        // Quizzes total weight
-        practical: number;      // Lab practical weight
-        project: number;        // Project marks weight
-        total: number;          // Total course marks weight (usually 100)
-      };
-      createdAt: string;        // ISO-8601 creation timestamp
-      updatedAt: string;        // ISO-8601 update timestamp
-    }
-    ```
-
-### `exams` Collection
-Contains specifications and model answers for scheduled assessments.
-*   *Document ID*: Auto-generated UUID.
-*   *Schema*:
-    ```typescript
-    interface Exam {
-      id: string;               // Unique Exam ID
-      courseId: string;         // Parent Course Reference -> courses.id
-      courseName: string;       // Cached course name
-      courseCode: string;       // Cached course code
-      title: string;            // Exam title (e.g., 'Midterm Exam')
-      examType: 'midterm' | 'final' | 'quiz' | 'assignment';
-      examDate: string;         // Scheduled date & time (ISO format)
-      duration: number;         // Exam duration limit (in minutes)
-      totalMarks: number;       // Maximum possible exam score
-      facultyId: string;        // Owner Reference -> faculty.uid
-      status: 'draft' | 'scheduled' | 'ongoing' | 'completed' | 'graded';
-      modelAnswerText?: string; // Markdown text-based model answer
-      modelAnswerPdfUrl?: string; // Cloudinary PDF model answer asset link
-      modelAnswerPdfName?: string; // PDF model answer filename
-      modelAnswerImageUrl?: string; // Cloudinary Image model answer asset link
-      modelAnswerImageName?: string; // Image model answer filename
-      isLocked: boolean;        // Lock status to prevent grading schema changes
-      submissionsCount?: number; // Total ingested student submissions count
-      gradedCount?: number;     // Total graded student submissions count
-      isMultiPage?: boolean;    // Dynamic multi-page scanning indicator
-      createdAt: string;        // ISO-8601 creation timestamp
-      updatedAt: string;        // ISO-8601 update timestamp
-    }
-    ```
-
-### `submissions` Collection
-Represents individual scanned student sheets awaiting AI assessment.
-*   *Document ID*: Auto-generated UUID.
-*   *Schema*:
-    ```typescript
-    interface StudentSubmission {
-      id: string;               // Unique Submission ID
-      examId: string;           // Parent Exam Reference -> exams.id
-      studentId: string;        // Student Identification number
-      studentName: string;      // Student full name
-      imageUrl: string;         // Cloudinary script image asset link
-      imagePath: string;        // Cloudinary reference public ID
-      status: 'pending' | 'processing' | 'graded' | 'approved' | 'rejected';
-      aiGrade?: number;         // Score suggested by Gemini
-      finalGrade?: number;      // Confirmed/adjusted manual grade
-      gradingResultId?: string; // Referenced Grading result -> grades.id
-      uploadedAt: string;       // ISO-8601 upload timestamp
-      uploadedBy: string;       // Ingesting Faculty Reference -> faculty.uid
-    }
-    ```
-
-### `grades` Collection
-Aggregated grading record containing detailed feedback log and performance outputs.
-*   *Document ID*: Auto-generated UUID (corresponds to `submissions.gradingResultId`).
-*   *Schema*:
-    ```typescript
-    interface Grade {
-      id: string;               // Unique Grade ID
-      studentId: string;        // Student Identification code
-      studentName: string;      // Student full name
-      examId: string;           // Parent Exam Reference -> exams.id
-      examTitle: string;        // Cached exam title
-      courseId: string;         // Grandparent Course Reference -> courses.id
-      courseName: string;       // Cached course name
-      courseCode: string;       // Cached course code
-      score: number;            // Final awarded grade score
-      maxScore: number;         // Exam maximum possible score
-      percentage: number;       // Percent grade (score / maxScore * 100)
-      letterGrade: 'A' | 'B' | 'C' | 'D' | 'F'; // letter grade boundary
-      status: 'draft' | 'approved' | 'published';
-      submissionId?: string;    // Reference to source submission -> submissions.id
-      submissionIds?: string[]; // Referenced submission ids for multi-page answers
-      studentImageUrl?: string; // Cloudinary student script visual link
-      gradedAt: string;         // ISO-8601 grading completed timestamp
-      approvedAt?: string;      // ISO-8601 approval timestamp
-      gradingResult?: {         // Structured feedback logs
-        grade: number;          // AI generated grading score
-        confidence: number;     // AI evaluation confidence index (0-100)
-        analysis: string;       // Comprehensive grading justification summary
-        matchedPoints: string[]; // Correct answers matches found
-        missedPoints: string[];  // Missed rubric conditions list
-        detectedStudentName?: string; // Student name read from script header
-        detectedStudentId?: string;   // Student ID read from script header
-        gradedBy: string;       // Grading Faculty Reference -> faculty.uid
-      };
-    }
-    ```
+```text
+BIS-Smart-Grader-V2-main/
+├── components/                 # UI Layouts & Presentational Views
+│   ├── Dashboard/              # Faculty Dashboard Workspaces
+│   │   ├── modals/             # Reorganized Modal Subfolders
+│   │   │   ├── BulkUploadModal.tsx   # Asynchronous batch script uploader
+│   │   │   ├── CreateExamModal.tsx   # Exam scheduler & key configuration
+│   │   │   ├── EditCourseModal.tsx   # Grading scheme configurations
+│   │   │   └── GradeDetailModal.tsx  # Detailed AI grading justification & overrides
+│   │   ├── CourseCard.tsx
+│   │   ├── CourseDetail.tsx          # Syllabus details & custom grading schemes
+│   │   ├── CourseManagement.tsx      # Main courses dashboard list
+│   │   ├── DashboardHome.tsx         # Analytical statistics overview (fixes memory leaks)
+│   │   ├── DashboardLayout.tsx       # Dynamic drawer shell with RTL layout mirror
+│   │   ├── ExamCard.tsx
+│   │   ├── ExamDetail.tsx            # Submission list, status tracks, and grading triggers
+│   │   ├── ExamManagement.tsx        # Exam schedules catalog
+│   │   ├── GradeAnalytics.tsx        # Recharts interactive graphs (Score curves, Grade boundaries)
+│   │   ├── GradeSheet.tsx            # Cell-level inline spreadsheet ledger
+│   │   ├── ProfilePage.tsx           # Faculty profile settings
+│   │   ├── SettingsPage.tsx          # System theme (Dark/Light) and language configuration
+│   │   ├── StudentDetail.tsx         # Comprehensive student progress logs
+│   │   └── StudentList.tsx           # Academic rosters
+│   ├── AuthPage.tsx            # Session login & whitelisted registration
+│   ├── LandingPage.tsx         # Public marketing home with interactive demo console
+│   └── RequireAuth.tsx         # Client-side router authentication guard
+├── context/                    # Shared Global State Providers
+│   ├── LanguageContext.tsx     # Arabic (RTL) / English (LTR) localization mapping
+│   ├── ThemeContext.tsx        # Dark / Light UI coordinator
+│   └── ToastContext.tsx        # Custom non-blocking animation-driven notifications
+├── firebase/                   # Firebase Config Setup
+│   └── firebaseConfig.ts       # Firebase SDK v10 client initializer
+├── services/                   # Business Logic & Core API Adapters
+│   ├── cloudinaryService.ts    # CDN image/PDF upload handlers
+│   ├── courseService.ts        # Course transactions
+│   ├── exportService.ts        # Document exporters (XLSX, Custom PDF layouts)
+│   ├── geminiGradingService.ts # Gemini model options, prompts, and schema enforcement
+│   └── notificationService.ts  # Database notification alerts publisher
+├── utils/                      # Static catalogs
+│   └── bisCurriculum.ts        # Official Assiut University BIS syllabus dataset
+├── types.ts                    # Global TypeScript interfaces
+├── firestore.rules             # Granular database security rules
+├── firebase.json               # Firebase CLI rules & hosting configurations
+├── .firebaserc                 # Firebase CLI project association
+└── vite.config.ts              # Vite asset bundler configuration
+```
 
 ---
 
-## 5. The Gemini AI Prompt Engineering Layer (The Core Engine)
+## 🔒 Security & Data Isolation Guardrails
 
-The core grading mechanism utilizes the `gemini-2.5-flash` model, configured with strict JSON schemas to prevent model hallucinations and extract structured grading data.
+To protect grading integrity and meet institutional data constraints, security policies are implemented at two levels:
 
-### System Instructions & Core Prompt
-The Gemini API is invoked with multi-modal content parts (student script images, model answer files, grading rubrics) alongside the following system instruction prompt:
+### 1. Whitelisted Domain Access
+Academic registration is locked at the authentication gateway. Faculty accounts must register using an authorized university domain suffix matching `*.edu.eg` or `*.aun.edu.eg`.
 
+### 2. Multi-Tenant Firestore Rules
+Database level access policies are declared in `firestore.rules` preventing unauthorized cross-tenant operations:
+* **Courses, Exams, Submissions, Grades:** Can only be read, created, updated, or deleted if the authenticated user's UID matches the resource owner's `facultyId` attribute (`resource.data.facultyId == request.auth.uid`).
+* **Faculty Profiles:** A user can only view or edit their own profile document (`request.auth.uid == facultyId`). Deletion is disabled.
+* **Student Rosters:** Authenticated faculty members have read-only access. Direct write/delete actions are prohibited globally.
+
+---
+
+## 📝 Firestore Schema Specifications
+
+The Firestore database layout is defined by the following TypeScript interfaces:
+
+### 1. Faculty Profile (`/faculty/{uid}`)
+```typescript
+interface FacultyProfile {
+  uid: string;              // Auth UID match
+  email: string;            // Whitelisted university email
+  fullName: string;         // Full academic name
+  department: string;       // Department name
+  academicRank: string;     // 'Professor', 'Associate Professor', etc.
+  specialization: string;   // Specialized field of study
+  role: 'faculty';          // Static security role
+  courses: string[];        // Array of Course IDs
+  photoUrl?: string;        // Profile picture URL
+  createdAt: string;        // ISO timestamp
+  updatedAt: string;        // ISO timestamp
+}
+```
+
+### 2. Courses (`/courses/{id}`)
+```typescript
+interface Course {
+  id: string;
+  code: string;             // e.g., 'BIS 203'
+  name: string;
+  nameAr?: string;          // Arabic title
+  nameEn?: string;          // English title
+  description?: string;
+  creditHours: number;
+  theoryHours?: number;
+  practicalHours?: number;
+  facultyId: string;        // Owner Reference
+  semester: string;         // e.g., 'Fall 2026'
+  academicYear: string;     // e.g., '2026/2027'
+  gradingScheme: {          // Dynamic evaluation bounds
+    final: number;          // Final weight
+    midterm: number;        // Midterm weight
+    classWork: number;
+    quizzes: number;
+    practical: number;
+    project: number;
+    total: number;          // Must equal 100
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### 3. Exams (`/exams/{id}`)
+```typescript
+interface Exam {
+  id: string;
+  courseId: string;
+  courseName: string;
+  courseCode: string;
+  title: string;
+  examType: 'midterm' | 'final' | 'quiz' | 'assignment';
+  examDate: string;
+  duration: number;         // In minutes
+  totalMarks: number;       // Exam scale (e.g., 20)
+  facultyId: string;
+  status: 'draft' | 'scheduled' | 'ongoing' | 'completed' | 'graded';
+  modelAnswerText?: string;
+  modelAnswerPdfUrl?: string;
+  modelAnswerImageUrl?: string;
+  isLocked: boolean;
+  submissionsCount?: number;
+  gradedCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### 4. Submissions (`/submissions/{id}`)
+```typescript
+interface StudentSubmission {
+  id: string;
+  examId: string;
+  studentId: string;
+  studentName: string;
+  imageUrl: string;         // Cloudinary asset link
+  imagePath: string;        // Cloudinary reference key
+  status: 'pending' | 'processing' | 'graded' | 'approved' | 'rejected';
+  aiGrade?: number;         // Suggested AI score
+  finalGrade?: number;      // Manual override score
+  gradingResultId?: string; // Referenced Grade Document ID
+  uploadedAt: string;
+  uploadedBy: string;
+}
+```
+
+---
+
+## ⚡ The AI Prompt & Evaluation Blueprint
+
+The core grading mechanism utilizes the `gemini-2.5-flash` model, configured with strict JSON schemas to extract structured grading data.
+
+The system processes the following prompt schema:
 ```text
 You are an expert academic grader for "{examTitle}".
 
 **CRITICAL TASK - IDENTIFY STUDENT:**
 Before grading, you MUST first identify the student from the top of the exam paper.
-1. **Student Name**: Look for "Name", "Student Name", "الاسم", "اسم الطالب". Extract the full name written next to it.
-2. **Student ID**: Look for "ID", "Student ID", "Code", "الرقم الجامعي", "رقم القيد", "الكود". Extract the numeric/alphanumeric ID.
-3. If the handwriting is messy, try your best to interpret it.
+1. Student Name: Look for "Name", "اسم الطالب". Extract the full name written next to it.
+2. Student ID: Look for "ID", "Code", "رقم القيد", "الكود". Extract the alphanumeric ID.
 
 **Grading Task:**
 1. Carefully read the handwritten student answer in the ATTACHED images (there may be multiple pages).
@@ -339,22 +222,22 @@ Before grading, you MUST first identify the student from the top of the exam pap
 3. Grade the answer based on the rubric, considering all provided pages as a single exam submission.
 4. Provide detailed analysis.
 
-**Model Answer:**
+Model Answer:
 {modelAnswerText}
 
-**Grading Rubric:**
+Grading Rubric:
 {rubric}
 
-**Maximum Score:** {maxScore}
+Maximum Score: {maxScore}
 
-**Instructions:**
+Instructions:
 - Read the student's handwriting carefully (it may be in Arabic or English)
 - Award partial credit for partially correct answers
 - Be fair and consistent
 - Identify specific points the student got right and wrong
 - If you find the Name or ID, include them in the response. If absolutely not found, return null.
 
-**Response Format (JSON only):**
+Response Format (JSON only):
 {
   "studentName": "<extracted name or null>",
   "studentId": "<extracted ID or null>",
@@ -364,205 +247,55 @@ Before grading, you MUST first identify the student from the top of the exam pap
   "matchedPoints": ["<point 1 student got correct>", "<point 2>", ...],
   "missedPoints": ["<point 1 student missed>", "<point 2>", ...]
 }
-
-Respond ONLY with valid JSON, no additional text.
-```
-
-### JSON Schema Enforcement
-The request is initialized with `generationConfig: { responseMimeType: "application/json" }`, forcing the model to restrict its output stream to a valid JSON format. This avoids markdown wrappers (e.g., ` ```json `) and guarantees parsability.
-
-#### Mock Structured JSON Output (Enforced Schema)
-The following structured payload shows an expected response from the Gemini API:
-
-```json
-{
-  "studentName": "Bavly Hamdy",
-  "studentId": "221165973",
-  "grade": 13.5,
-  "confidence": 0.95,
-  "analysis": "The student has demonstrated a strong understanding of system software concepts, correctly defining operating systems and utility drivers. However, they partially missed the explanation of dynamic memory management, referring only to physical storage limitations rather than cache swapping policies.",
-  "analyticalFeedback": {
-    "correctPoints": [
-      "Correctly defined operating systems and gave Windows as an example",
-      "Properly distinguished system software from application software"
-    ],
-    "missedPoints": [
-      "Failed to explain the role of virtual memory in dynamic scheduling allocations"
-    ]
-  }
-}
 ```
 
 ---
 
-## 6. Asynchronous Cloudinary Storage Pipeline
+## 🛠️ Local Development & Quickstart
 
-To avoid database size limitations and store binary data (student papers, answer key sheets, PDFs) securely away from Firestore, E-WIRRETN employs a dedicated Cloudinary integration.
-
-### Core Upload Implementation
-Both images and raw PDF files are uploaded using async `FormData` payloads sent to the Cloudinary REST API. Progress tracking is handled via `XMLHttpRequest` event listeners, communicating upload percentages back to the calling React UI state.
-
-```typescript
-export interface CloudinaryUploadResponse {
-  secure_url: string;   // HTTPS secure asset URL served via CDN
-  public_id: string;    // Cloudinary unique asset path identifier
-  format: string;       // File format extension (e.g. 'jpg', 'pdf')
-  width: number;        // Image width in pixels
-  height: number;       // Image height in pixels
-  bytes: number;        // File size in bytes
-  url: string;          // HTTP asset URL
-}
-```
-
-#### Upload Workflows
-1.  **Image Uploads (Answer Sheets)**: Images are posted to `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`.
-2.  **PDF/Raw Uploads (Model Answers)**: PDFs are uploaded as raw resources to `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload` with the `resource_type: 'raw'` parameter set in the upload configuration.
-
----
-
-## 7. Document Exporter Service
-
-The `services/exportService.ts` module generates analytical reports locally in the browser, using two formatting paths:
-
-### 1. Excel Workbook Generation (`XLSX`)
-Generates dual-sheet spreadsheets containing student grade sheets and analytics summaries.
-*   **Sheet 1: Official Grade Report**: Contains course metadata header, exam titles, generation timestamps, and student tables listing Student ID, Full Name, Score, Percentage, Letter Grade, and Publishing Status. Column widths are dynamically sized to ensure visual formatting.
-*   **Sheet 2: Analytics Summary**: Formats metric parameters including total class size, pass rates, fail ratios, class averages, and extreme score bounds (highest/lowest scores).
-
-### 2. Official PDF Report Cards (`jsPDF` & `jspdf-autotable`)
-Generates printable, print-ready PDF reports with university formatting:
-*   **University Top Banner**: Renders a brand-colored violet rectangle (`#4c1d97`) containing report titles, institution headers (Faculty of Commerce - BIS Program), dates, and confidentiality markings.
-*   **Analytics Dashboard Badge**: A rounded rectangular info box summarizing key parameters (Total Students, Pass Rate, Average Score) with conditional coloring (green for pass rates >= 70%, red for lower performance).
-*   **Formatted AutoTable**: Renders student rosters with alternate row striping, explicit column width distributions, and color-coded grades (A in green, F in red).
-*   **Academic Signature Lines**: Automatically appends examiner and head-of-department signature lines at the document bottom, managing page breaks to prevent isolated overflow text.
-
----
-
-## 8. Full Repository Directory Topology
-
-Below is the complete repository file structure of **E-WIRRETN**, detailing every major module, service, and layout component in the system:
-
-```text
-BIS-Smart-Grader-V2-main/
-├── components/                 # View Components Layer
-│   ├── Dashboard/              # Authenticated Faculty Workspaces
-│   │   ├── BulkUploadModal.tsx      # Multi-student script file batch loader
-│   │   ├── CourseCard.tsx           # Course index grid visual container
-│   │   ├── CourseDetail.tsx         # Detailed single course syllabus dashboard
-│   │   ├── CourseManagement.tsx     # Course schemes editor (Logical: MyCourses.tsx)
-│   │   ├── CreateExamModal.tsx      # Exam registration modal
-│   │   ├── DashboardHome.tsx        # High-level metrics charts (Logical: Overview.tsx)
-│   │   ├── DashboardLayout.tsx      # Grid dashboard drawer & layout frame
-│   │   ├── EditCourseModal.tsx      # Course settings update panel
-│   │   ├── ExamCard.tsx             # Exam state card container
-│   │   ├── ExamDetail.tsx           # Submissions tracker (Logical: ExamsManager.tsx)
-│   │   ├── ExamManagement.tsx       # Exams list visual container
-│   │   ├── GradeAnalytics.tsx       # Recharts student analytics visualizations
-│   │   ├── GradeDetailModal.tsx     # Student script scoring breakdown panel
-│   │   ├── GradeSheet.tsx           # Inline spreadsheet grade adjustment ledger
-│   │   ├── ProfilePage.tsx          # User details settings interface
-│   │   ├── SettingsPage.tsx         # Dark/Light theme & language selector toggle
-│   │   ├── StudentDetail.tsx        # Individual student progress metrics
-│   │   └── StudentList.tsx          # Academic class rosters (Logical: Students.tsx)
-│   ├── AuthPage.tsx            # Domain email login & registration panel
-│   ├── LandingPage.tsx         # Promotional home interface
-│   └── RequireAuth.tsx         # Route authorization guard
-├── context/                    # Shared Global State Contexts
-│   ├── LanguageContext.tsx     # Translation keys & document layout direction (RTL/LTR)
-│   ├── ThemeContext.tsx        # Light/Dark/System styling coordinator
-│   └── ToastContext.tsx        # Global transient message dispatcher
-├── firebase/                   # Data Store Integration Layer
-│   └── firebaseConfig.ts       # Firebase v10 client SDK config initialization
-├── services/                   # Backend Integration Adapters
-│   ├── cloudinaryService.ts    # Multipart binary image upload client
-│   ├── courseService.ts        # Database course CRUD transactional adapters
-│   ├── exportService.ts        # PDF grading reports & Excel spreadsheet generators
-│   ├── geminiGradingService.ts # Gemini Vision API configuration, prompts core & auto grading service
-│   └── notificationService.ts  # Database notification alerts publisher
-├── utils/                      # Auxiliary Modules & Mock databases
-│   └── bisCurriculum.ts        # Hardcoded curriculum dataset catalog
-├── types.ts                    # Application-wide TypeScript interface definitions
-├── firestore.rules             # Backend database security rules
-├── index.css                   # Global styling rules & Tailwind directives
-├── index.html                  # HTML structure entry point template
-├── index.tsx                   # React app mounting script
-├── package.json                # Project script execution pipelines and dependencies
-├── tailwind.config.js          # Typography styling extensions & themes
-└── vite.config.ts              # Bundler configs and plugin switches
-```
-
----
-
-## 9. Security & Access Control Guardrails
-
-### 1. Restricted Domain Authentication
-To protect academic grading integrity, account registration checks are enforced during authentication:
-*   *Validation Rule*: All registering faculty emails must match university domain endings (e.g., ending with `*.edu.eg` or `*.aun.edu.eg`).
-*   *Implementation*: Handled securely at the registration screen during Firebase Authentication signup routines.
-
-### 2. Multi-Tenant Firestore Isolation
-Security policies are declared in `firestore.rules` to enforce multi-tenant isolation directly on the database engine level:
-
-*   **Faculty Profiles (`/faculty/{uid}`)**:
-    *   `allow read`: Allowed for any authenticated faculty user.
-    *   `allow create`: Evaluates ownership via matching UID (`request.auth.uid == userId`) and enforces the `.edu.eg` domain suffix constraint.
-    *   `allow update`: Allowed only for the profile owner, restricting email modifications.
-    *   `allow delete`: Prohibited globally.
-
-*   **Courses & Exams (`/courses/{id}`, `/exams/{id}`)**:
-    *   `allow read, write`: Permitted only if the authenticated instructor's UID matches the object owner reference (`resource.data.facultyId == request.auth.uid`).
-
-*   **Student Rosters (`/students/{id}`)**:
-    *   `allow read`: Open to all authenticated faculty members.
-    *   `allow write`: Prohibited globally.
-
-*   **Submissions & Grades (`/submissions/{id}`, `/grades/{id}`)**:
-    *   `allow read, write`: Permitted only if the instructor UID matches the object owner reference (`resource.data.facultyId == request.auth.uid`).
-
----
-
-## 10. Local Quick-Start Guide
+To run the application locally on your machine, follow these steps:
 
 ### Prerequisites
-Ensure the following tools are installed on your development workstation:
-*   **Node.js**: `v18.0.0` or higher
-*   **npm** / **yarn** package manager
+* **Node.js** v18.0.0 or higher
+* A Firebase Project (with Firestore and Authentication enabled)
+* A Cloudinary Account (with an unsigned upload preset configured)
+* A Google AI Studio Gemini API Key
 
-### 1. Clone & Install
-Retrieve project files and install dependencies:
+### 1. Installation
+Clone the repository and install dependencies:
 ```bash
 git clone https://github.com/Bavly-Hamdy/BIS-Smart-Grader-V2.git
 cd BIS-Smart-Grader-V2
 npm install
 ```
 
-### 2. Environment Setup
-Create a `.env.local` file in the root directory and populate it with your environment variables:
-
+### 2. Environment Variables Configuration
+Create a `.env` file in the root directory:
 ```env
-# Firebase Web App SDK Configuration
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
+# Gemini API Key (Generate from Google AI Studio)
+VITE_GEMINI_API_KEY="your_gemini_api_key"
 
-# Decoupled Cloudinary API Credentials
-VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-VITE_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
+# Firebase Client SDK Credentials
+VITE_FIREBASE_API_KEY="your_api_key"
+VITE_FIREBASE_AUTH_DOMAIN="your_project_id.firebaseapp.com"
+VITE_FIREBASE_DATABASE_URL="https://your_project_id-default-rtdb.firebaseio.com"
+VITE_FIREBASE_PROJECT_ID="your_project_id"
+VITE_FIREBASE_STORAGE_BUCKET="your_project_id.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID="your_sender_id"
+VITE_FIREBASE_APP_ID="your_app_id"
+VITE_FIREBASE_MEASUREMENT_ID="your_measurement_id"
 
-# Google AI Studio Gemini API Key
-VITE_GEMINI_API_KEY=your_gemini_api_key
+# Cloudinary CDN Configuration
+VITE_CLOUDINARY_CLOUD_NAME="your_cloudinary_cloud_name"
+VITE_CLOUDINARY_UPLOAD_PRESET="your_unsigned_upload_preset"
 ```
 
 ### 3. Start Development Server
-Boot up the local hot-reloading development server:
 ```bash
 npm run dev
 ```
-The application will boot at `http://localhost:5173`.
+The application will be accessible at `http://localhost:5173`.
 
 ---
 
-<sub>© 2026 Assiut University - BIS Department. All Rights Reserved. Fully localized supporting Arabic (RTL) & English (LTR). Project Title: E-WIRRETN.</sub>
+<sub>© 2026 Assiut University - BIS Department. All Rights Reserved. Fully localized supporting Arabic (RTL) & English (LTR).</sub>
