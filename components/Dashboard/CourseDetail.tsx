@@ -16,12 +16,14 @@ import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { motion } from 'framer-motion';
-import EditCourseModal from './EditCourseModal';
+import EditCourseModal from './modals/EditCourseModal';
 import { Edit } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 
 const CourseDetail: React.FC = () => {
     const { courseId } = useParams<{ courseId: string }>();
     const navigate = useNavigate();
+    const { addToast } = useToast();
     const [course, setCourse] = useState<Course | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -87,7 +89,7 @@ const CourseDetail: React.FC = () => {
             // Validate total is 100
             const currentTotal = Object.values(cleanScheme).reduce((a, b) => a + b, 0) - cleanScheme.total;
             if (currentTotal !== 100) {
-                alert(`Total marks must equal 100. Current total: ${currentTotal}`);
+                addToast(`Total marks must equal 100. Current total: ${currentTotal}`, 'warning');
                 return;
             }
 
@@ -99,10 +101,10 @@ const CourseDetail: React.FC = () => {
             setCourse(prev => prev ? { ...prev, gradingScheme: cleanScheme } : null);
             setGradingScheme(cleanScheme);
             setIsEditing(false);
-            alert("Grading scheme updated successfully!");
+            addToast("Grading scheme updated successfully!", "success");
         } catch (error) {
             console.error("Error updating scheme:", error);
-            alert("Failed to update grading scheme");
+            addToast("Failed to update grading scheme", "error");
         }
     };
 

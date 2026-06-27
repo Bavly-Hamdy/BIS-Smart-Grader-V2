@@ -43,7 +43,7 @@ Traditionally, grading hundreds of student scripts during midterm and final exam
     *   *Responsive Toggle Triggers*: Adapts layouts dynamically across mobile devices, tablets, and desktop dimensions.
 
 ### 4. Analytic Metrics Dashboard (Overview)
-*   **Logical Modules**: `components/Dashboard/DashboardHome.tsx`, `components/Dashboard/ActionItemsPanel.tsx`, `components/Dashboard/GradeAnalytics.tsx`.
+*   **Logical Modules**: `components/Dashboard/DashboardHome.tsx`, `components/Dashboard/GradeAnalytics.tsx`.
 *   **Analytics Capabilities**:
     *   *KPI Counters Matrix*: Tracks overall registered courses counts, active student profiles, average graded scores, and assessment totals.
     *   *Dynamic Analytics Graphs*: Renders interactive SVG visual reports utilizing Recharts:
@@ -55,7 +55,7 @@ Traditionally, grading hundreds of student scripts during midterm and final exam
         *   At-risk students profiling (scores dropping under 60%).
 
 ### 5. Curriculum & Grading Schemes Manager (My Courses)
-*   **Logical Modules**: `components/Dashboard/CourseManagement.tsx`, `components/Dashboard/AddCourseModal.tsx`, `components/Dashboard/EditCourseModal.tsx`, `components/Dashboard/CourseDetail.tsx`, `components/Dashboard/CourseCard.tsx`.
+*   **Logical Modules**: `components/Dashboard/CourseManagement.tsx`, `components/Dashboard/EditCourseModal.tsx`, `components/Dashboard/CourseDetail.tsx`, `components/Dashboard/CourseCard.tsx`.
 *   **Academic Workflows**:
     *   *Dynamic Grading Schemes Editor*: Instructors can customize grade weights (Midterm %, Final %, Classwork %, Practical Labs %, Project %) totaling 100%. Ensures all assignments obey these schemas during grade compilation.
     *   *BIS Dynamic Syllabus Catalog*: Search-friendly autocompletion tool utilizing `utils/bisCurriculum.ts`, synchronizing metadata inputs with official Assiut University BIS Curriculum criteria (Course Code, Arabic Title, English Title, Weekly Lecture/Lab distribution).
@@ -69,7 +69,7 @@ Traditionally, grading hundreds of student scripts during midterm and final exam
     *   *Ingestion Monitoring Panel*: Displays lists of uploaded student scripts, processing states (`pending`, `processing`, `graded`), confidence logs, and final scores.
 
 ### 7. Scanned Script Ingestion & AI Evaluator
-*   **Logical Modules**: `components/Dashboard/BulkUploadModal.tsx`, `services/geminiService.ts`, `services/cloudinaryService.ts`, `components/Dashboard/GradeDetailModal.tsx`.
+*   **Logical Modules**: `components/Dashboard/BulkUploadModal.tsx`, `services/geminiGradingService.ts`, `services/cloudinaryService.ts`, `components/Dashboard/GradeDetailModal.tsx`.
 *   **Vision Processing pipeline**:
     *   *Cloudinary Asset Pipeline*: Processes scanned student papers, resizes image sizes (max width of `1024px`), and uploads them to the CDN.
     *   *Gemini Vision Ingestion*: Decouples grading request payloads to invoke the `gemini-2.5-flash` model under strict JSON schema options.
@@ -145,7 +145,7 @@ The platform orchestrates image transformations, AI grading requests, and databa
 ### Detailed Lifecycle Steps
 1.  **Ingestion**: The instructor uploads scanned student exam papers via the `BulkUploadModal` or `ExamDetail` components.
 2.  **Asset Offloading**: The `cloudinaryService` receives the image files, uploads them to the Cloudinary CDN, and applies resizing logic to maintain a maximum width of `1024px` for optimal processing speed.
-3.  **AI Engine Invocation**: The `geminiService` is triggered, receiving the Cloudinary student image URL, the model answer data (text, PDF URL, or image URL), the maximum score, and the grading rubrics.
+3.  **AI Engine Invocation**: The `geminiGradingService` is triggered, receiving the Cloudinary student image URL, the model answer data (text, PDF URL, or image URL), the maximum score, and the grading rubrics.
 4.  **Generative Assessment**: The Gemini model parses handwriting and compares it to the model answer, outputting structured grading results.
 5.  **Payload Validation**: The service parses the JSON response, enforces bounds constraints (constraining grades between `0` and the exam's maximum score, and confidence scores between `0.0` and `1.0`), and implements fallback routines if parsing fails.
 6.  **Database Synchronization**: Grading records, student profiles, updated exam submission counts, and user notifications are committed in a batched write transaction to Firestore.
@@ -446,8 +446,6 @@ Below is the complete repository file structure of **E-WIRRETN**, detailing ever
 BIS-Smart-Grader-V2-main/
 ├── components/                 # View Components Layer
 │   ├── Dashboard/              # Authenticated Faculty Workspaces
-│   │   ├── ActionItemsPanel.tsx     # Rapid warning cues and task notifications
-│   │   ├── AddCourseModal.tsx       # Interactive course enrollment modal
 │   │   ├── BulkUploadModal.tsx      # Multi-student script file batch loader
 │   │   ├── CourseCard.tsx           # Course index grid visual container
 │   │   ├── CourseDetail.tsx         # Detailed single course syllabus dashboard
@@ -479,12 +477,10 @@ BIS-Smart-Grader-V2-main/
 │   ├── cloudinaryService.ts    # Multipart binary image upload client
 │   ├── courseService.ts        # Database course CRUD transactional adapters
 │   ├── exportService.ts        # PDF grading reports & Excel spreadsheet generators
-│   ├── geminiGradingService.ts # Gemini Vision API configuration & prompts core
-│   ├── geminiService.ts        # Auto grading service matching expected JSON outputs
+│   ├── geminiGradingService.ts # Gemini Vision API configuration, prompts core & auto grading service
 │   └── notificationService.ts  # Database notification alerts publisher
 ├── utils/                      # Auxiliary Modules & Mock databases
-│   ├── bisCurriculum.ts        # Hardcoded curriculum dataset catalog
-│   └── mockData.ts             # Chart layouts validation mock inputs
+│   └── bisCurriculum.ts        # Hardcoded curriculum dataset catalog
 ├── types.ts                    # Application-wide TypeScript interface definitions
 ├── firestore.rules             # Backend database security rules
 ├── index.css                   # Global styling rules & Tailwind directives

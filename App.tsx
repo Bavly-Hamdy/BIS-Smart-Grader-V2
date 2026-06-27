@@ -1,6 +1,5 @@
 
 import React from 'react';
-// @ts-ignore - fix for exported member error
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import AuthPage from './components/AuthPage';
@@ -20,12 +19,14 @@ import RequireAuth from './components/RequireAuth';
 import { LanguageProvider } from './context/LanguageContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <ToastProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <LanguageProvider>
+          <ToastProvider>
           <HashRouter>
             <Routes>
               <Route path="/" element={<LandingPage />} />
@@ -61,6 +62,7 @@ const App: React.FC = () => {
         </ToastProvider>
       </LanguageProvider>
     </ThemeProvider>
+    </ErrorBoundary>
   );
 };
 

@@ -6,7 +6,7 @@ import { auth, db } from '../../firebase/firebaseConfig';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { motion } from 'framer-motion';
 import Button from '../Button';
-import CreateExamModal from './CreateExamModal';
+import CreateExamModal from './modals/CreateExamModal';
 import ExamCard from './ExamCard';
 import { Exam } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';

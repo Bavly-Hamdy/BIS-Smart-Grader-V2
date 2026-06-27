@@ -1,10 +1,30 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from 'zod';
+
+const gradingResponseSchema = z.object({
+    grade: z.number().default(0),
+    confidence: z.number().default(0),
+    analysis: z.string().default('No analysis provided'),
+    matchedPoints: z.array(z.string()).default([]),
+    missedPoints: z.array(z.string()).default([]),
+    studentName: z.string().nullable().optional(),
+    studentId: z.string().nullable().optional()
+});
+
+const studentInfoSchema = z.object({
+    studentName: z.string().nullable().optional(),
+    studentId: z.string().nullable().optional()
+});
 
 // Initialize Gemini API
-// Note: In production, use environment variable
-// For now, use a placeholder - add your actual API key in .env
-const API_KEY = (import.meta as any).env?.VITE_GEMINI_API_KEY || 'AIzaSyCWYzUsmOcuqyXZVbox2OUQIyLtNW5m5Uk';
-const genAI = new GoogleGenerativeAI(API_KEY);
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const genAI = new GoogleGenerativeAI(API_KEY || 'dummy_key');
+
+function checkApiKey() {
+    if (!API_KEY || API_KEY === 'REPLACE_THIS_WITH_YOUR_NEW_GEMINI_API_KEY' || API_KEY.trim() === '') {
+        throw new Error('Gemini API key is not configured. Please generate a new key from Google AI Studio and configure VITE_GEMINI_API_KEY in your .env file.');
+    }
+}
 
 export interface GradingRequest {
     studentAnswerImageUrl?: string;
@@ -34,6 +54,7 @@ export interface GradingResponse {
  */
 export async function gradeSubmission(request: GradingRequest): Promise<GradingResponse> {
     try {
+        checkApiKey();
         if (!request.modelAnswerText && !request.modelAnswerPdfUrl && !request.modelAnswerImageUrl) {
             throw new Error('Either model answer text, PDF URL, or Image URL must be provided');
         }
@@ -230,18 +251,19 @@ function parseGeminiResponse(text: string, maxScore: number): GradingResponse {
             cleanText = cleanText.replace(/```\n?/, '').replace(/```\n?$/, '');
         }
 
-        const parsed = JSON.parse(cleanText);
+        const parsedRaw = JSON.parse(cleanText);
+        const parsed = gradingResponseSchema.parse(parsedRaw);
 
         // Validate and constrain values
-        const grade = Math.max(0, Math.min(maxScore, parsed.grade || 0));
-        const confidence = Math.max(0, Math.min(100, parsed.confidence || 0));
+        const grade = Math.max(0, Math.min(maxScore, parsed.grade));
+        const confidence = Math.max(0, Math.min(100, parsed.confidence));
 
         return {
             grade,
             confidence,
-            analysis: parsed.analysis || 'No analysis provided',
-            matchedPoints: Array.isArray(parsed.matchedPoints) ? parsed.matchedPoints : [],
-            missedPoints: Array.isArray(parsed.missedPoints) ? parsed.missedPoints : [],
+            analysis: parsed.analysis,
+            matchedPoints: parsed.matchedPoints,
+            missedPoints: parsed.missedPoints,
             detectedStudentName: parsed.studentName || undefined,
             detectedStudentId: parsed.studentId || undefined
         };
@@ -339,6 +361,7 @@ export async function batchGradeSubmissions(
  */
 export async function extractStudentInfo(file: File): Promise<{ studentId: string | null, studentName: string | null }> {
     try {
+        checkApiKey();
         const model = genAI.getGenerativeModel({ 
             model: 'gemini-2.5-flash',
             generationConfig: { responseMimeType: "application/json" }
@@ -369,7 +392,8 @@ Respond ONLY in valid JSON format: {"studentName": "extracted name", "studentId"
             text = text.replace(/```\n?/, '').replace(/```\n?$/, '');
         }
 
-        const parsed = JSON.parse(text);
+        const parsedRaw = JSON.parse(text);
+        const parsed = studentInfoSchema.parse(parsedRaw);
         return {
             studentName: parsed.studentName || null,
             studentId: parsed.studentId || null

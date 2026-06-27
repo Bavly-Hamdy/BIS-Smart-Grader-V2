@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-// @ts-ignore - fix for exported member error
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Sun, Moon } from 'lucide-react';
 import Button from './Button';

@@ -1,21 +1,9 @@
-import React, { ReactNode } from 'react';
-
-export interface BaseProps {
-  children?: ReactNode;
-  className?: string;
-}
+import React from 'react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
-}
-
-export interface FeatureCardProps {
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  delay?: number;
 }
 
 export interface FacultyProfile {
@@ -58,18 +46,6 @@ export interface Exam {
   isMultiPage?: boolean;
 }
 
-export interface ModelAnswer {
-  id: string;
-  examId: string;
-  fileName: string;
-  fileUrl: string;
-  fileSize: number;
-  uploadedAt: string;
-  uploadedBy: string;
-  version: number;
-  isActive: boolean;
-}
-
 export interface StudentSubmission {
   id: string;
   examId: string;
@@ -83,33 +59,6 @@ export interface StudentSubmission {
   aiGrade?: number;
   finalGrade?: number;
   gradingResultId?: string;
-}
-
-export interface GradingResult {
-  id: string;
-  submissionId: string;
-  examId: string;
-  studentId: string;
-  aiSuggestedGrade: number;
-  aiConfidence: number; // 0-100
-  aiAnalysis: string; // Detailed feedback from Gemini
-  matchedPoints?: string[];
-  missedPoints?: string[];
-  manualGrade?: number;
-  finalGrade: number;
-  gradedBy: string; // facultyId
-  gradedAt: string;
-  isApproved: boolean;
-  approvedAt?: string;
-  comments?: string;
-}
-
-export interface GradingCriteria {
-  examId: string;
-  modelAnswerUrl: string;
-  rubric: string; // Grading instructions for Gemini
-  maxScore: number;
-  partialCreditEnabled: boolean;
 }
 
 export interface Grade {

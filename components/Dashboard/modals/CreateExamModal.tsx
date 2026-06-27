@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Calendar as CalendarIcon, Clock, FileText } from 'lucide-react';
-import { auth, db } from '../../firebase/firebaseConfig';
+import { auth, db } from '../../../firebase/firebaseConfig';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
-import Button from '../Button';
-import { useLanguage } from '../../context/LanguageContext';
+import Button from '../../Button';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface CreateExamModalProps {
     isOpen: boolean;

@@ -44,6 +44,9 @@ const DashboardHome: React.FC = () => {
     // Set initial name from auth, but fetch real profile to be sure
     setUserName(auth.currentUser.displayName || '');
 
+    let coursesUnsub: () => void = () => {};
+    let examsUnsub: () => void = () => {};
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -63,7 +66,7 @@ const DashboardHome: React.FC = () => {
 
         // 1. Fetch Courses
         const coursesQuery = query(collection(db, 'courses'), where('facultyId', '==', uid));
-        const coursesUnsub = onSnapshot(coursesQuery, (snapshot) => {
+        coursesUnsub = onSnapshot(coursesQuery, (snapshot) => {
           const courseData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[];
           courseData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           setCourses(courseData);
@@ -71,7 +74,7 @@ const DashboardHome: React.FC = () => {
 
         // 2. Fetch Exams (to see active exams)
         const examsQuery = query(collection(db, 'exams'), where('facultyId', '==', uid));
-        const examsUnsub = onSnapshot(examsQuery, async (snapshot) => {
+        examsUnsub = onSnapshot(examsQuery, async (snapshot) => {
           const examData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Exam[];
           setExams(examData);
 
@@ -95,68 +98,6 @@ const DashboardHome: React.FC = () => {
           }
         });
 
-        const processGrades = (gradeData: any[]) => {
-          setGrades(gradeData);
-          
-          // Unique students overall
-          const uniqueStudents = new Set(gradeData.map(g => g.studentId));
-          setTotalStudents(uniqueStudents.size);
-
-          // Breakdown per course
-          const breakdownMap: Record<string, { name: string, code: string, students: Set<string> }> = {};
-          gradeData.forEach(g => {
-            if (!breakdownMap[g.courseId]) {
-              breakdownMap[g.courseId] = { 
-                name: g.courseName || 'Unknown Course', 
-                code: g.courseCode || '',
-                students: new Set() 
-              };
-            }
-            breakdownMap[g.courseId].students.add(g.studentId);
-          });
-
-          const breakdown = Object.entries(breakdownMap).map(([id, data]) => ({
-            courseId: id,
-            courseName: data.name,
-            courseCode: data.code,
-            count: data.students.size
-          })).sort((a, b) => b.count - a.count);
-          
-          setStudentBreakdown(breakdown);
-
-          if (gradeData.length > 0) {
-            const total = gradeData.reduce((acc, curr) => acc + (curr.totalScore || curr.score || 0), 0);
-            const avg = total / gradeData.length;
-            setAverageScore(Math.round(avg * 10) / 10);
-
-            const dist = [0, 0, 0, 0, 0];
-            gradeData.forEach(g => {
-              const s = g.percentage || 0;
-              if (s >= 85) dist[4]++;
-              else if (s >= 75) dist[3]++;
-              else if (s >= 65) dist[2]++;
-              else if (s >= 50) dist[1]++;
-              else dist[0]++;
-            });
-            setGradeDistribution([
-              { name: 'F', count: dist[0] },
-              { name: 'D', count: dist[1] },
-              { name: 'C', count: dist[2] },
-              { name: 'B', count: dist[3] },
-              { name: 'A', count: dist[4] },
-            ]);
-
-          } else {
-            setAverageScore(0);
-            setGradeDistribution([]);
-          }
-        };
-
-        return () => {
-          coursesUnsub();
-          examsUnsub();
-        };
-
       } catch (error) {
         console.error("Error asking dashboard data:", error);
       } finally {
@@ -164,7 +105,69 @@ const DashboardHome: React.FC = () => {
       }
     };
 
+    const processGrades = (gradeData: any[]) => {
+      setGrades(gradeData);
+      
+      // Unique students overall
+      const uniqueStudents = new Set(gradeData.map(g => g.studentId));
+      setTotalStudents(uniqueStudents.size);
+
+      // Breakdown per course
+      const breakdownMap: Record<string, { name: string, code: string, students: Set<string> }> = {};
+      gradeData.forEach(g => {
+        if (!breakdownMap[g.courseId]) {
+          breakdownMap[g.courseId] = { 
+            name: g.courseName || 'Unknown Course', 
+            code: g.courseCode || '',
+            students: new Set() 
+          };
+        }
+        breakdownMap[g.courseId].students.add(g.studentId);
+      });
+
+      const breakdown = Object.entries(breakdownMap).map(([id, data]) => ({
+        courseId: id,
+        courseName: data.name,
+        courseCode: data.code,
+        count: data.students.size
+      })).sort((a, b) => b.count - a.count);
+      
+      setStudentBreakdown(breakdown);
+
+      if (gradeData.length > 0) {
+        const total = gradeData.reduce((acc, curr) => acc + (curr.totalScore || curr.score || 0), 0);
+        const avg = total / gradeData.length;
+        setAverageScore(Math.round(avg * 10) / 10);
+
+        const dist = [0, 0, 0, 0, 0];
+        gradeData.forEach(g => {
+          const s = g.percentage || 0;
+          if (s >= 85) dist[4]++;
+          else if (s >= 75) dist[3]++;
+          else if (s >= 65) dist[2]++;
+          else if (s >= 50) dist[1]++;
+          else dist[0]++;
+        });
+        setGradeDistribution([
+          { name: 'F', count: dist[0] },
+          { name: 'D', count: dist[1] },
+          { name: 'C', count: dist[2] },
+          { name: 'B', count: dist[3] },
+          { name: 'A', count: dist[4] },
+        ]);
+
+      } else {
+        setAverageScore(0);
+        setGradeDistribution([]);
+      }
+    };
+
     fetchData();
+
+    return () => {
+      coursesUnsub();
+      examsUnsub();
+    };
   }, [auth.currentUser]);
 
   const activeExams = exams.length;

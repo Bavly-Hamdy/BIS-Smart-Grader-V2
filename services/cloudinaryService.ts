@@ -1,8 +1,8 @@
 // Cloudinary Upload Service
 // Free tier alternative to Firebase Storage
 
-const CLOUD_NAME = (import.meta as any).env?.VITE_CLOUDINARY_CLOUD_NAME || 'dapkfv2kt';
-const UPLOAD_PRESET = (import.meta as any).env?.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default';
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dapkfv2kt';
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default';
 
 export interface CloudinaryUploadResponse {
     secure_url: string;

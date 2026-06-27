@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-// @ts-ignore - fix for exported member error
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { FileUp, Loader2, Award, ArrowRight } from 'lucide-react';
 

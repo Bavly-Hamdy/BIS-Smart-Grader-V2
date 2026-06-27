@@ -28,14 +28,16 @@ import { Grade, GradeSheet } from '../../types';
 import { calculateLetterGrade, prepareGradeSheet, exportToExcel, exportToPDF } from '../../services/exportService';
 import Button from '../Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import GradeDetailModal from './GradeDetailModal';
+import GradeDetailModal from './modals/GradeDetailModal';
 import GradeAnalytics from './GradeAnalytics';
 import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
 
 const GradeSheetPage: React.FC = () => {
     const { examId } = useParams<{ examId: string }>();
     const navigate = useNavigate();
     const { t, language, dir } = useLanguage();
+    const { addToast } = useToast();
     const isRTL = language === 'ar';
     const [gradeSheet, setGradeSheet] = useState<GradeSheet | null>(null);
     const [filteredGrades, setFilteredGrades] = useState<Grade[]>([]);
@@ -151,7 +153,7 @@ const GradeSheetPage: React.FC = () => {
             fetchGrades(); // Refresh the list
         } catch (error) {
             console.error('Error deleting grade:', error);
-            alert(t('delete_grade_fail'));
+            addToast(t('delete_grade_fail'), 'error');
         }
     };
 
@@ -165,7 +167,7 @@ const GradeSheetPage: React.FC = () => {
         
         const unpublishedGrades = gradeSheet.grades.filter(g => g.status !== 'published');
         if (unpublishedGrades.length === 0) {
-            alert(t('publish_all_already'));
+            addToast(t('publish_all_already'), 'warning');
             return;
         }
 
@@ -181,11 +183,11 @@ const GradeSheetPage: React.FC = () => {
             );
             
             await Promise.all(publishPromises);
-            alert(t('results_published_alert'));
+            addToast(t('results_published_alert'), 'success');
             fetchGrades();
         } catch (error) {
             console.error('Error publishing results:', error);
-            alert(t('publish_all_fail'));
+            addToast(t('publish_all_fail'), 'error');
         } finally {
             setIsPublishing(false);
         }
@@ -209,7 +211,7 @@ const GradeSheetPage: React.FC = () => {
             fetchGrades();
         } catch (error) {
             console.error('Error updating grade status:', error);
-            alert(t('publish_grade_fail'));
+            addToast(t('publish_grade_fail'), 'error');
         }
     };
 

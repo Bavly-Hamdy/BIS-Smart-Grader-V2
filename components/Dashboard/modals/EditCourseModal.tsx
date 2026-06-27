@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, BookOpen, Hash, Loader2, Calendar, Clock, AlignLeft } from 'lucide-react';
-import Button from '../Button';
-import { db } from '../../firebase/firebaseConfig';
+import Button from '../../Button';
+import { db } from '../../../firebase/firebaseConfig';
 import { doc, updateDoc } from 'firebase/firestore';
-import { Course } from '../../types';
+import { Course } from '../../../types';
+import { useToast } from '../../../context/ToastContext';
 
 interface EditCourseModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface EditCourseModalProps {
 }
 
 const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, course, onCourseUpdated }) => {
+    const { addToast } = useToast();
     const [name, setName] = useState(course.name);
     const [code, setCode] = useState(course.code);
     const [creditHours, setCreditHours] = useState(course.creditHours);
@@ -49,10 +51,11 @@ const EditCourseModal: React.FC<EditCourseModalProps> = ({ isOpen, onClose, cour
             await updateDoc(courseRef, updatedData);
 
             onCourseUpdated({ ...course, ...updatedData });
+            addToast("Course updated successfully!", "success");
             onClose();
         } catch (error) {
             console.error("Error updating course: ", error);
-            alert("Failed to update course");
+            addToast("Failed to update course", "error");
         } finally {
             setLoading(false);
         }

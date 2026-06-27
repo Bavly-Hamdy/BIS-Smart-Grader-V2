@@ -12,7 +12,6 @@ import Hero from './Hero';
 import DemoSection from './DemoSection';
 import NewsCard from './NewsCard';
 import ScrollToTop from './ScrollToTop';
-// @ts-ignore - fix for exported member error
 import { useNavigate } from 'react-router-dom';
 import logoIcon from '../public/logo-icon.png';
 

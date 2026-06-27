@@ -1,13 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { X, Upload, FileImage, AlertCircle, Check, Loader2, Copy, Link as LinkIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth } from '../../firebase/firebaseConfig';
+import { auth } from '../../../firebase/firebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebaseConfig';
-import { uploadImageToCloudinary } from '../../services/cloudinaryService';
-import { extractStudentInfo } from '../../services/geminiGradingService';
-import Button from '../Button';
-import { useLanguage } from '../../context/LanguageContext';
+import { db } from '../../../firebase/firebaseConfig';
+import { uploadImageToCloudinary } from '../../../services/cloudinaryService';
+import { extractStudentInfo } from '../../../services/geminiGradingService';
+import Button from '../../Button';
+import { useLanguage } from '../../../context/LanguageContext';
+import { useToast } from '../../../context/ToastContext';
 
 interface BulkUploadModalProps {
     examId: string;
@@ -37,6 +38,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     onComplete
 }) => {
     const { t, language, dir } = useLanguage();
+    const { addToast } = useToast();
     const isRTL = language === 'ar';
     const [files, setFiles] = useState<UploadFile[]>([]);
     const [isDragging, setIsDragging] = useState(false);
@@ -192,7 +194,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
         const filesWithStudents = files.filter(f => f.studentId && f.status === 'pending');
 
         if (filesWithStudents.length === 0) {
-            alert(t('assign_students_error'));
+            addToast(t('assign_students_error'), 'error');
             return;
         }
 
@@ -390,7 +392,6 @@ interface FileCardProps {
 
 const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, onCopyFromPrevious, disabled, isGrouped }) => {
     const { t, language } = useLanguage();
-    const isRTL = language === 'ar';
     return (
         <div className={`rounded-lg p-4 transition-all ${isGrouped ? 'bg-indigo-50/50 dark:bg-indigo-900/10 border-l-4 border-indigo-500' : 'bg-slate-50 dark:bg-slate-800'}`}>
             <div className="flex items-start gap-4">
@@ -501,6 +502,7 @@ const FileCard: React.FC<FileCardProps> = ({ file, onRemove, onStudentAssign, on
                         </div>
                     )}
 
+                    {/* Status */}
                     {file.status === 'error' && (
                         <div className="mt-2 flex items-center gap-2 text-red-600 dark:text-red-400">
                             <AlertCircle className="h-4 w-4" />

@@ -21,15 +21,17 @@ import { Trash2 } from 'lucide-react';
 import { uploadPdfToCloudinary, uploadImageToCloudinary } from '../../services/cloudinaryService';
 import { motion } from 'framer-motion';
 import Button from '../Button';
-import BulkUploadModal from './BulkUploadModal';
+import BulkUploadModal from './modals/BulkUploadModal';
 import { Exam, StudentSubmission } from '../../types';
 import { batchGradeSubmissions, GradingRequest } from '../../services/geminiGradingService';
 import { useLanguage } from '../../context/LanguageContext';
+import { useToast } from '../../context/ToastContext';
 
 const ExamDetail: React.FC = () => {
     const { examId } = useParams<{ examId: string }>();
     const navigate = useNavigate();
     const { t, language, dir } = useLanguage();
+    const { addToast } = useToast();
     const isRTL = language === 'ar';
 
     const [exam, setExam] = useState<Exam | null>(null);
@@ -158,7 +160,7 @@ const ExamDetail: React.FC = () => {
         } catch (error) {
             console.error('Error uploading PDF:', error);
             setIsUploadingPdf(false);
-            alert(isRTL ? 'فشل رفع ملف PDF. يرجى المحاولة مرة أخرى.' : 'Failed to upload PDF. Please try again.');
+            addToast(isRTL ? 'فشل رفع ملف PDF. يرجى المحاولة مرة أخرى.' : 'Failed to upload PDF. Please try again.', 'error');
         }
     };
 
@@ -192,7 +194,7 @@ const ExamDetail: React.FC = () => {
         } catch (error) {
             console.error('Error uploading image:', error);
             setIsUploadingImage(false);
-            alert(isRTL ? 'فشل رفع الصورة. يرجى المحاولة مرة أخرى.' : 'Failed to upload Image. Please try again.');
+            addToast(isRTL ? 'فشل رفع الصورة. يرجى المحاولة مرة أخرى.' : 'Failed to upload Image. Please try again.', 'error');
         }
     };
 
@@ -245,7 +247,7 @@ const ExamDetail: React.FC = () => {
             const pendingSubmissions = submissions.filter(s => s.status === 'pending' || s.status === 'processing');
 
             if (pendingSubmissions.length === 0) {
-                alert(t('all_graded_alert'));
+                addToast(t('all_graded_alert'), 'info');
                 setIsGrading(false);
                 return;
             }
@@ -369,7 +371,7 @@ const ExamDetail: React.FC = () => {
             setSubmissions(prev => prev.filter(s => s.id !== subId));
         } catch (error) {
             console.error('Error deleting submission:', error);
-            alert(t('delete_submission_fail'));
+            addToast(t('delete_submission_fail'), 'error');
         }
     };
 

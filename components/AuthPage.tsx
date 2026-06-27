@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// @ts-ignore - fix for exported member error
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -18,7 +17,6 @@ import {
 import Button from './Button';
 import { auth, db } from '../firebase/firebaseConfig';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-// @ts-ignore - fix for exported member error
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import logoIcon from '../public/logo-icon.png';
 

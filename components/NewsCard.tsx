@@ -66,7 +66,10 @@ const NewsCard: React.FC = () => {
 
     try {
       // Use the correct way to access env var in Vite
-      const API_KEY = (import.meta as any).env?.VITE_GEMINI_API_KEY || 'AIzaSyCyUYSsXMA8nWl_jaMUgbYvLHYGobJ_u5c';
+      const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+      if (!API_KEY || API_KEY === 'REPLACE_THIS_WITH_YOUR_NEW_GEMINI_API_KEY') {
+        throw new Error('Gemini API key is not configured.');
+      }
       const genAI = new GoogleGenerativeAI(API_KEY);
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 

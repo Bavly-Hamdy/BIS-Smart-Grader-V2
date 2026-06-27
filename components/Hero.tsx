@@ -1,10 +1,8 @@
 
 import React from 'react';
-// @ts-ignore - fix for exported member error
 import { motion, Variants } from 'framer-motion';
 import { ChevronRight, FileText, CheckCircle2 } from 'lucide-react';
 import Button from './Button';
-// @ts-ignore - fix for exported member error
 import { useNavigate } from 'react-router-dom';
 
 const Hero: React.FC = () => {

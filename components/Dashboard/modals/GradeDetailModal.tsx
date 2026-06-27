@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, XCircle, FileText, AlertCircle, Percent, ExternalLink, Image as ImageIcon, Edit2, Save, ArrowLeft } from 'lucide-react';
-import { Grade, StudentSubmission } from '../../types';
+import { Grade, StudentSubmission } from '../../../types';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase/firebaseConfig';
-import Button from '../Button';
-import { useLanguage } from '../../context/LanguageContext';
+import { db } from '../../../firebase/firebaseConfig';
+import Button from '../../Button';
+import { useLanguage } from '../../../context/LanguageContext';
+import { useToast } from '../../../context/ToastContext';
 
 interface GradeDetailModalProps {
     isOpen: boolean;
@@ -19,6 +19,7 @@ interface GradeDetailModalProps {
 
 const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, grade, modelAnswerText, modelAnswerPdfUrl, onGradeUpdated }) => {
     const { t, language, dir } = useLanguage();
+    const { addToast } = useToast();
     const isRTL = language === 'ar';
     const [activeTab, setActiveTab] = useState<'analysis' | 'paper'>('analysis');
     const [submission, setSubmission] = useState<StudentSubmission | null>(null);
@@ -100,10 +101,11 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
             }
 
             setIsEditingScore(false);
+            addToast("Score updated successfully!", "success");
             if (onGradeUpdated) onGradeUpdated();
         } catch (error) {
             console.error('Error updating score:', error);
-            alert(t('failed_to_update_score'));
+            addToast(t('failed_to_update_score'), 'error');
         } finally {
             setIsSavingScore(false);
         }
@@ -127,10 +129,11 @@ const GradeDetailModal: React.FC<GradeDetailModalProps> = ({ isOpen, onClose, gr
             }
 
             setIsEditingDetails(false);
+            addToast("Student details updated successfully!", "success");
             if (onGradeUpdated) onGradeUpdated();
         } catch (error) {
             console.error('Error updating student details:', error);
-            alert(t('failed_to_update_details'));
+            addToast(t('failed_to_update_details'), 'error');
         } finally {
             setIsSavingDetails(false);
         }

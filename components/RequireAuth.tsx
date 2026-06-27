@@ -1,9 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-// @ts-ignore - fix for exported member error
 import { Navigate, useLocation } from 'react-router-dom';
 import { auth } from '../firebase/firebaseConfig';
-// @ts-ignore - fix for exported member error
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 
