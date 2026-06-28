@@ -35,6 +35,8 @@ const DashboardHome: React.FC = () => {
   const [averageScore, setAverageScore] = useState(0);
   const [gradeDistribution, setGradeDistribution] = useState<any[]>([]);
   const [showStudentBreakdown, setShowStudentBreakdown] = useState(false);
+  const [showCoursesBreakdown, setShowCoursesBreakdown] = useState(false);
+  const [showExamsBreakdown, setShowExamsBreakdown] = useState(false);
   const [studentBreakdown, setStudentBreakdown] = useState<any[]>([]);
 
   useEffect(() => {
@@ -174,7 +176,7 @@ const DashboardHome: React.FC = () => {
   const recentGradesCount = grades.length; // Simplified for demo
 
   // Premium Stat Card Component
-  const StatCard = ({ label, value, icon: Icon, color, delay, onClick, isClickable }: any) => {
+  const StatCard = ({ label, value, icon: Icon, color, delay, onClick, isClickable, isOpen }: any) => {
     const colorStyles = {
       blue: { bg: 'bg-blue-50 dark:bg-blue-900/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-100 dark:border-blue-800' },
       emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/10', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-100 dark:border-emerald-800' },
@@ -205,7 +207,7 @@ const DashboardHome: React.FC = () => {
             </div>
             {isClickable && (
               <div className={`p-1.5 rounded-full ${style.bg} ${style.text} opacity-0 group-hover:opacity-100 transition-opacity`}>
-                {showStudentBreakdown ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </div>
             )}
           </div>
@@ -263,7 +265,12 @@ const DashboardHome: React.FC = () => {
           color="blue" 
           delay={1} 
           isClickable={true}
-          onClick={() => navigate('courses')}
+          isOpen={showCoursesBreakdown}
+          onClick={() => {
+            setShowCoursesBreakdown(!showCoursesBreakdown);
+            setShowStudentBreakdown(false);
+            setShowExamsBreakdown(false);
+          }}
         />
         <StatCard 
           label={t('total_students')} 
@@ -272,7 +279,12 @@ const DashboardHome: React.FC = () => {
           color="teal" 
           delay={2} 
           isClickable={true}
-          onClick={() => setShowStudentBreakdown(!showStudentBreakdown)}
+          isOpen={showStudentBreakdown}
+          onClick={() => {
+            setShowStudentBreakdown(!showStudentBreakdown);
+            setShowCoursesBreakdown(false);
+            setShowExamsBreakdown(false);
+          }}
         />
         <StatCard 
           label={t('active_exams')} 
@@ -281,7 +293,12 @@ const DashboardHome: React.FC = () => {
           color="purple" 
           delay={3} 
           isClickable={true}
-          onClick={() => navigate('exams')}
+          isOpen={showExamsBreakdown}
+          onClick={() => {
+            setShowExamsBreakdown(!showExamsBreakdown);
+            setShowCoursesBreakdown(false);
+            setShowStudentBreakdown(false);
+          }}
         />
         <StatCard label={t('new_grades')} value={recentGradesCount} icon={FileCheck} color="indigo" delay={4} />
         <StatCard label={t('avg_score')} value={`${averageScore}%`} icon={TrendingUp} color="emerald" delay={5} />
@@ -330,6 +347,155 @@ const DashboardHome: React.FC = () => {
                 ) : (
                   <div className="col-span-full py-10 text-center text-slate-500 bg-white/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
                     {isRTL ? 'لا توجد بيانات طلاب متاحة للمقررات بعد.' : 'No student data available for courses yet.'}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Active Courses Breakdown Section */}
+      <AnimatePresence>
+        {showCoursesBreakdown && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-slate-50 dark:bg-slate-800/40 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-inner">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
+                  <BookOpen className="h-5 w-5" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  {isRTL ? 'المقررات الدراسية النشطة' : 'Active Courses'}
+                </h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {courses.length > 0 ? (
+                  courses.map((course, idx) => (
+                    <motion.div
+                      key={course.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.05 }}
+                      onClick={() => navigate(`/faculty-dashboard/courses/${course.id}`)}
+                      className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between cursor-pointer group hover:border-blue-500 dark:hover:border-blue-700 hover:shadow-md transition-all active:scale-[0.98]"
+                    >
+                      <div>
+                        <div className="flex justify-between items-start mb-3">
+                          <span className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider rounded-lg">
+                            {course.code}
+                          </span>
+                          <span className="text-xs text-slate-500 font-medium">
+                            {course.creditHours} {isRTL ? 'ساعات معتمدة' : 'Credit Hours'}
+                          </span>
+                        </div>
+                        <h4 className="text-base font-bold text-slate-800 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
+                          {isRTL ? course.nameAr || course.name : course.nameEn || course.name}
+                        </h4>
+                        {course.description && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">
+                            {course.description}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[10px] uppercase font-bold text-slate-400">
+                        <span>{course.semester}</span>
+                        <span>{course.academicYear}</span>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="col-span-full py-10 text-center text-slate-500 bg-white/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                    {isRTL ? 'لا توجد مقررات نشطة مسجلة حالياً.' : 'No active courses registered currently.'}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Active Exams Breakdown Section */}
+      <AnimatePresence>
+        {showExamsBreakdown && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-slate-50 dark:bg-slate-800/40 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-inner">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  {isRTL ? 'الامتحانات النشطة' : 'Active Exams'}
+                </h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {exams.length > 0 ? (
+                  exams.map((exam, idx) => {
+                    const statusColors = {
+                      draft: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+                      scheduled: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                      ongoing: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                      completed: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+                      graded: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                    };
+                    const statusBg = statusColors[exam.status as keyof typeof statusColors] || statusColors.draft;
+
+                    return (
+                      <motion.div
+                        key={exam.id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.05 }}
+                        onClick={() => navigate(`/faculty-dashboard/exams/${exam.id}`)}
+                        className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between cursor-pointer group hover:border-purple-500 dark:hover:border-purple-700 hover:shadow-md transition-all active:scale-[0.98]"
+                      >
+                        <div>
+                          <div className="flex justify-between items-start mb-3">
+                            <span className="px-2.5 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-bold uppercase tracking-wider rounded-lg">
+                              {exam.courseCode}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${statusBg}`}>
+                              {isRTL ? (
+                                exam.status === 'draft' ? 'مسودة' :
+                                exam.status === 'scheduled' ? 'مجدول' :
+                                exam.status === 'ongoing' ? 'مستمر' :
+                                exam.status === 'completed' ? 'مكتمل' : 'تم رصده'
+                              ) : exam.status}
+                            </span>
+                          </div>
+                          <h4 className="text-base font-bold text-slate-800 dark:text-white mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors line-clamp-1">
+                            {exam.title}
+                          </h4>
+                          <p className="text-xs text-slate-400 mb-4 line-clamp-1">{exam.courseName}</p>
+                        </div>
+                        
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-[10px] uppercase font-bold text-slate-400">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {exam.duration} {isRTL ? 'دقيقة' : 'Min'}
+                          </span>
+                          <span>
+                            {new Date(exam.examDate).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                      </motion.div>
+                    );
+                  })
+                ) : (
+                  <div className="col-span-full py-10 text-center text-slate-500 bg-white/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                    {isRTL ? 'لا توجد امتحانات مسجلة حالياً.' : 'No exams registered currently.'}
                   </div>
                 )}
               </div>
