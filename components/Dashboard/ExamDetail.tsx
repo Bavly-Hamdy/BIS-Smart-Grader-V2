@@ -97,7 +97,11 @@ const ExamDetail: React.FC = () => {
             }
 
             // Fetch Submissions
-            const q = query(collection(db, 'submissions'), where('examId', '==', examId));
+            const q = query(
+                collection(db, 'submissions'),
+                where('examId', '==', examId),
+                where('uploadedBy', '==', auth.currentUser!.uid)
+            );
             const snapshot = await getDocs(q);
             const subs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as StudentSubmission[];
             setSubmissions(subs);
