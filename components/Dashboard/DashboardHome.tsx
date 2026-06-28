@@ -256,7 +256,15 @@ const DashboardHome: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
-        <StatCard label={t('active_courses')} value={courses.length} icon={BookOpen} color="blue" delay={1} />
+        <StatCard 
+          label={t('active_courses')} 
+          value={courses.length} 
+          icon={BookOpen} 
+          color="blue" 
+          delay={1} 
+          isClickable={true}
+          onClick={() => navigate('courses')}
+        />
         <StatCard 
           label={t('total_students')} 
           value={totalStudents} 
@@ -266,7 +274,15 @@ const DashboardHome: React.FC = () => {
           isClickable={true}
           onClick={() => setShowStudentBreakdown(!showStudentBreakdown)}
         />
-        <StatCard label={t('active_exams')} value={activeExams} icon={Calendar} color="purple" delay={3} />
+        <StatCard 
+          label={t('active_exams')} 
+          value={activeExams} 
+          icon={Calendar} 
+          color="purple" 
+          delay={3} 
+          isClickable={true}
+          onClick={() => navigate('exams')}
+        />
         <StatCard label={t('new_grades')} value={recentGradesCount} icon={FileCheck} color="indigo" delay={4} />
         <StatCard label={t('avg_score')} value={`${averageScore}%`} icon={TrendingUp} color="emerald" delay={5} />
         <StatCard label={t('at_risk')} value={failCount} icon={AlertTriangle} color="rose" delay={6} />
