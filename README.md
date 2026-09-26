@@ -1,301 +1,330 @@
-# E-Written: BIS Smart Grader V2
+# Bavly-Hamdy/BIS-Smart-Grader-V2
 
-E-Written is an automated grading and academic analytics platform built specifically for the Business Information Systems (BIS) department at Assiut University. It bridges the gap between traditional paper exams and digital academic tracking by utilizing AI vision models to transcribe, grade, and analyze handwritten student scripts.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38BDF8?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-10.12-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Gemini AI](https://img.shields.io/badge/Google%20Generative%20AI-0.24-8E75B2?logo=google&logoColor=white)](https://ai.google.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The platform handles the entire grading pipeline: scanning script sheets, uploading assets through optimized CDNs, extracting student metadata, evaluating answers against multi-modal grading keys using Gemini, and exporting official academic ledgers in Excel and PDF formats.
+> An enterprise-grade, AI-powered automated assessment and grading platform architected for Business Information Systems (BIS) curriculums, integrating Google Gemini AI and Firebase for robust student evaluations.
 
----
-
-## 🛠️ Tech Stack & Key Integrations
-
-* **Frontend Framework:** React 18, Vite, TypeScript, Tailwind CSS, Framer Motion (for interface transitions).
-* **Database & Auth:** Firebase (Authentication, Cloud Firestore real-time listeners).
-* **AI Evaluation Engine:** Google Gemini 2.5 Flash (utilizing structured JSON schema outputs).
-* **Asset Pipeline:** Cloudinary REST API (asynchronous image uploads with client-side progress tracking).
-* **Document Generation:** `xlsx` (Excel grade sheets) and `jsPDF` / `jspdf-autotable` (examiner-signed report cards).
+![Preview](public/logo-icon.png)
 
 ---
 
-## 🏗️ System Architecture & Data Lifecycle
-
-The application operates as a serverless Single Page Application (SPA). Instead of introducing local state synchronization libraries (like Redux or Zustand) which can drift from the server state, E-Written binds components directly to Firestore collections via real-time `onSnapshot` listeners. 
-
-### The Journey of a Scanned Exam Sheet
-
-```
-[ Faculty Dashboard ] ──(Upload Image)──> [ Cloudinary API ]
-                                                  │ (Optimize & Resize to 1024px)
-                                                  ▼
-[ Firestore DB ] <──(Save Record)── [ Gemini API Engine ]
-        │                                 ▲ (OCR + Compare with Rubrics)
-        │ (Realtime Sync)                 │
-        ▼                                 │
-[ Live UI Update ] ───────────────────────┘
-```
-
-1. **Ingestion & CDN Offloading:** An instructor uploads scanned exam sheets (images or PDFs). The `cloudinaryService` optimizes the image resolution (capping width at `1024px`) and stores the asset securely.
-2. **AI Grading Payload:** The system constructs a multi-modal payload containing the optimized image URL, the model answer (text, PDF, or image key), the rubric configurations, and the exam's maximum score.
-3. **Structured Inference:** Gemini 2.5 Flash processes the handwriting (supporting Arabic and English), extracts the student's name and ID from the paper header, grades the answers, and outputs a strict JSON payload matching our schema constraints.
-4. **Atomic Database Commits:** The resulting grade sheet, parsed student metadata, and AI confidence records are committed in a batched write transaction to Firestore. The live socket listeners immediately update the instructor's dashboard.
+## 📋 Table of Contents
+1. [🏷️ Hero Header](#-hero-header)
+2. [📋 Table of Contents](#-table-of-contents)
+3. [🔍 Overview & Architectural Intent](#-overview-architectural-intent)
+4. [📌 Architecture & Workflow](#-architecture--workflow)
+5. [✨ Core Features & Capabilities](#-core-features--capabilities)
+6. [🛠️ Technologies & Ecosystem Matrix](#-technologies--ecosystem-matrix)
+7. [📋 Requirements & 🚀 Installation Guide](#-requirements--installation-guide)
+8. [📁 Project Structure](#-project-structure)
+9. [🧩 Main Modules & Technical Breakdown](#-main-modules--technical-breakdown)
+10. [🖥️ CLI & Script Execution Matrix](#-cli--script-execution-matrix)
+11. [🛡️ Security & Configuration Isolation](#-security--configuration-isolation)
+12. [🚀 Deployment & Environment Matrix](#-deployment--environment-matrix)
+13. [👥 Authors & Contributors](#-authors--contributors)
+14. [🤝 Contributing](#-contributing)
+15. [📄 License](#-license)
 
 ---
 
-## 📂 Repository Topology
+## 🔍 Overview & Architectural Intent
 
-Below is the directory layout of the repository, highlighting the restructured modals folder and core integration adapters:
+**BIS-Smart-Grader-V2** is built to solve high-volume academic grading bottlenecks within enterprise educational ecosystems. Modern Business Information Systems curriculums demand rigorous evaluation of both structured data analysis and subjective written responses, creating a massive administrative burden on faculty. 
 
-```text
-BIS-Smart-Grader-V2-main/
-├── components/                 # UI Layouts & Presentational Views
-│   ├── Dashboard/              # Faculty Dashboard Workspaces
-│   │   ├── modals/             # Reorganized Modal Subfolders
-│   │   │   ├── BulkUploadModal.tsx   # Asynchronous batch script uploader
-│   │   │   ├── CreateExamModal.tsx   # Exam scheduler & key configuration
-│   │   │   ├── EditCourseModal.tsx   # Grading scheme configurations
-│   │   │   └── GradeDetailModal.tsx  # Detailed AI grading justification & overrides
-│   │   ├── CourseCard.tsx
-│   │   ├── CourseDetail.tsx          # Syllabus details & custom grading schemes
-│   │   ├── CourseManagement.tsx      # Main courses dashboard list
-│   │   ├── DashboardHome.tsx         # Analytical statistics overview (fixes memory leaks)
-│   │   ├── DashboardLayout.tsx       # Dynamic drawer shell with RTL layout mirror
-│   │   ├── ExamCard.tsx
-│   │   ├── ExamDetail.tsx            # Submission list, status tracks, and grading triggers
-│   │   ├── ExamManagement.tsx        # Exam schedules catalog
-│   │   ├── GradeAnalytics.tsx        # Recharts interactive graphs (Score curves, Grade boundaries)
-│   │   ├── GradeSheet.tsx            # Cell-level inline spreadsheet ledger
-│   │   ├── ProfilePage.tsx           # Faculty profile settings
-│   │   ├── SettingsPage.tsx          # System theme (Dark/Light) and language configuration
-│   │   ├── StudentDetail.tsx         # Comprehensive student progress logs
-│   │   └── StudentList.tsx           # Academic rosters
-│   ├── AuthPage.tsx            # Session login & whitelisted registration
-│   ├── LandingPage.tsx         # Public marketing home with interactive demo console
-│   └── RequireAuth.tsx         # Client-side router authentication guard
-├── context/                    # Shared Global State Providers
-│   ├── LanguageContext.tsx     # Arabic (RTL) / English (LTR) localization mapping
-│   ├── ThemeContext.tsx        # Dark / Light UI coordinator
-│   └── ToastContext.tsx        # Custom non-blocking animation-driven notifications
-├── firebase/                   # Firebase Config Setup
-│   └── firebaseConfig.ts       # Firebase SDK v10 client initializer
-├── services/                   # Business Logic & Core API Adapters
-│   ├── cloudinaryService.ts    # CDN image/PDF upload handlers
-│   ├── courseService.ts        # Course transactions
-│   ├── exportService.ts        # Document exporters (XLSX, Custom PDF layouts)
-│   ├── geminiGradingService.ts # Gemini model options, prompts, and schema enforcement
-│   └── notificationService.ts  # Database notification alerts publisher
-├── utils/                      # Static catalogs
-│   └── bisCurriculum.ts        # Official Assiut University BIS syllabus dataset
-├── types.ts                    # Global TypeScript interfaces
-├── firestore.rules             # Granular database security rules
-├── firebase.json               # Firebase CLI rules & hosting configurations
-├── .firebaserc                 # Firebase CLI project association
-└── vite.config.ts              # Vite asset bundler configuration
-```
+This platform addresses this challenge by combining a responsive React single-page application (SPA) with serverless Firebase infrastructure and Google’s Gemini Generative AI models (`@google/generative-ai`). The architecture separates presentation logic from asynchronous AI evaluation streams, guaranteeing non-blocking user experiences while processing complex student assessments. State management relies on custom React Context providers coupled with reactive Firestore data bindings, allowing real-time synchronization of student grades, course rosters, and exam analytics across educator dashboards.
 
 ---
 
-## 🔒 Security & Data Isolation Guardrails
+## 📌 Architecture & Workflow
 
-To protect grading integrity and meet institutional data constraints, security policies are implemented at two levels:
+The platform follows a modular, component-driven client architecture communicating directly with secure Firebase backend services and Google Generative AI REST endpoints.
 
-### 1. Whitelisted Domain Access
-Academic registration is locked at the authentication gateway. Faculty accounts must register using an authorized university domain suffix matching `*.edu.eg` or `*.aun.edu.eg`.
+### Progression Flow Diagram
+```
+[ Educator Uploads Exam Submissions ]
+                 │
+                 ▼
+[ Bulk Upload Modal & File Parser (XLSX / PDF) ]
+                 │
+                 ▼
+[ Firebase Storage & Firestore persistence Layer ]
+                 │
+                 ▼
+[ Gemini AI Grading Engine (`geminiGradingService.ts`) ]
+                 │
+                 ├──────────────────────────────┐
+                 ▼                              ▼
+    [ Structured Rubric Matching ]    [ Qualitative Feedback Generation ]
+                 │                              │
+                 └──────────────┬───────────────┘
+                                ▼
+         [ Grade Analytics & PDF Export (`exportService.ts`) ]
+```
 
-### 2. Multi-Tenant Firestore Rules
-Database level access policies are declared in `firestore.rules` preventing unauthorized cross-tenant operations:
-* **Courses, Exams, Submissions, Grades:** Can only be read, created, updated, or deleted if the authenticated user's UID matches the resource owner's `facultyId` attribute (`resource.data.facultyId == request.auth.uid`).
-* **Faculty Profiles:** A user can only view or edit their own profile document (`request.auth.uid == facultyId`). Deletion is disabled.
-* **Student Rosters:** Authenticated faculty members have read-only access. Direct write/delete actions are prohibited globally.
+### System Architecture Flowchart
+```mermaid
+graph TD
+    A[Client Browser / React SPA] -->|Authentication & Session| B[Firebase Auth]
+    A -->|State & Document Sync| C[Firestore Database]
+    A -->|File Uploads & Assets| D[Firebase Storage]
+    A -->|AI Evaluation Request| E[Google Generative AI API]
+    E -->|Structured Assessment| A
+    A -->|Export Reports| F[jsPDF & XLSX Export Engines]
+```
+
+### Architectural Decision Records (ADRs) & Trade-Offs
+
+| Decision Point | Chosen Approach | Alternative Considered | Rationale |
+| :--- | :--- | :--- | :--- |
+| **Frontend Framework** | React 18 + Vite | Next.js / SSR | SPA architecture enables rapid deployment to static hosting (Firebase Hosting / GitHub Pages) while maintaining client-side caching. |
+| **AI Integration** | Client-to-Gemini SDK Service | Dedicated Backend Microservice | Reduces infrastructure operational overhead for institutional deployments while leveraging Google's secure API keys. |
+| **Database & Auth** | Firebase (Firestore & Auth) | Custom Node/PostgreSQL | Provides instantaneous real-time sync, robust security rule enforcement, and minimal maintenance overhead for academic institutions. |
+| **Styling Engine** | Tailwind CSS v3 | CSS Modules / SCSS | Accelerated UI development with utility-first consistency and built-in support for responsive academic dashboards. |
 
 ---
 
-## 📝 Firestore Schema Specifications
+## ✨ Core Features & Capabilities
 
-The Firestore database layout is defined by the following TypeScript interfaces:
-
-### 1. Faculty Profile (`/faculty/{uid}`)
-```typescript
-interface FacultyProfile {
-  uid: string;              // Auth UID match
-  email: string;            // Whitelisted university email
-  fullName: string;         // Full academic name
-  department: string;       // Department name
-  academicRank: string;     // 'Professor', 'Associate Professor', etc.
-  specialization: string;   // Specialized field of study
-  role: 'faculty';          // Static security role
-  courses: string[];        // Array of Course IDs
-  photoUrl?: string;        // Profile picture URL
-  createdAt: string;        // ISO timestamp
-  updatedAt: string;        // ISO timestamp
-}
-```
-
-### 2. Courses (`/courses/{id}`)
-```typescript
-interface Course {
-  id: string;
-  code: string;             // e.g., 'BIS 203'
-  name: string;
-  nameAr?: string;          // Arabic title
-  nameEn?: string;          // English title
-  description?: string;
-  creditHours: number;
-  theoryHours?: number;
-  practicalHours?: number;
-  facultyId: string;        // Owner Reference
-  semester: string;         // e.g., 'Fall 2026'
-  academicYear: string;     // e.g., '2026/2027'
-  gradingScheme: {          // Dynamic evaluation bounds
-    final: number;          // Final weight
-    midterm: number;        // Midterm weight
-    classWork: number;
-    quizzes: number;
-    practical: number;
-    project: number;
-    total: number;          // Must equal 100
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-```
-
-### 3. Exams (`/exams/{id}`)
-```typescript
-interface Exam {
-  id: string;
-  courseId: string;
-  courseName: string;
-  courseCode: string;
-  title: string;
-  examType: 'midterm' | 'final' | 'quiz' | 'assignment';
-  examDate: string;
-  duration: number;         // In minutes
-  totalMarks: number;       // Exam scale (e.g., 20)
-  facultyId: string;
-  status: 'draft' | 'scheduled' | 'ongoing' | 'completed' | 'graded';
-  modelAnswerText?: string;
-  modelAnswerPdfUrl?: string;
-  modelAnswerImageUrl?: string;
-  isLocked: boolean;
-  submissionsCount?: number;
-  gradedCount?: number;
-  createdAt: string;
-  updatedAt: string;
-}
-```
-
-### 4. Submissions (`/submissions/{id}`)
-```typescript
-interface StudentSubmission {
-  id: string;
-  examId: string;
-  studentId: string;
-  studentName: string;
-  imageUrl: string;         // Cloudinary asset link
-  imagePath: string;        // Cloudinary reference key
-  status: 'pending' | 'processing' | 'graded' | 'approved' | 'rejected';
-  aiGrade?: number;         // Suggested AI score
-  finalGrade?: number;      // Manual override score
-  gradingResultId?: string; // Referenced Grade Document ID
-  uploadedAt: string;
-  uploadedBy: string;
-}
-```
+* **AI-Driven Automated Grading**: Leverages Google Generative AI to evaluate student submissions against predefined rubrics with fine-grained qualitative feedback.
+* **Comprehensive Course Management**: Intuitive administration interfaces for managing BIS course catalogs, semester cohorts, and faculty assignments.
+* **Advanced Exam & Assessment Builder**: Dynamic exam creation tools supporting multiple-choice, essay, and analytical problem sets.
+* **Real-Time Grade Analytics**: Visualized performance metrics powered by Recharts, offering deep insights into cohort grade distributions.
+* **Enterprise Reporting & Exporting**: Seamlessly export verified grade sheets and student performance breakdowns to PDF (via `jspdf` and `jspdf-autotable`) and Excel (`xlsx`).
+* **Multi-Language & Accessibility Support**: Built-in context providers for localized interfaces and accessibility compliance (high contrast and reduced motion modes).
 
 ---
 
-## ⚡ The AI Prompt & Evaluation Blueprint
+## 🛠️ Technologies & Ecosystem Matrix
 
-The core grading mechanism utilizes the `gemini-2.5-flash` model, configured with strict JSON schemas to extract structured grading data.
-
-The system processes the following prompt schema:
-```text
-You are an expert academic grader for "{examTitle}".
-
-**CRITICAL TASK - IDENTIFY STUDENT:**
-Before grading, you MUST first identify the student from the top of the exam paper.
-1. Student Name: Look for "Name", "اسم الطالب". Extract the full name written next to it.
-2. Student ID: Look for "ID", "Code", "رقم القيد", "الكود". Extract the alphanumeric ID.
-
-**Grading Task:**
-1. Carefully read the handwritten student answer in the ATTACHED images (there may be multiple pages).
-2. Compare it with the model answer provided.
-3. Grade the answer based on the rubric, considering all provided pages as a single exam submission.
-4. Provide detailed analysis.
-
-Model Answer:
-{modelAnswerText}
-
-Grading Rubric:
-{rubric}
-
-Maximum Score: {maxScore}
-
-Instructions:
-- Read the student's handwriting carefully (it may be in Arabic or English)
-- Award partial credit for partially correct answers
-- Be fair and consistent
-- Identify specific points the student got right and wrong
-- If you find the Name or ID, include them in the response. If absolutely not found, return null.
-
-Response Format (JSON only):
-{
-  "studentName": "<extracted name or null>",
-  "studentId": "<extracted ID or null>",
-  "grade": <number between 0 and maxScore>,
-  "confidence": <number between 0 and 100 indicating your confidence>,
-  "analysis": "<detailed explanation of grading decision>",
-  "matchedPoints": ["<point 1 student got correct>", "<point 2>", ...],
-  "missedPoints": ["<point 1 student missed>", "<point 2>", ...]
-}
-```
+| Dependency | Version | Category | Purpose |
+| :--- | :--- | :--- | :--- |
+| `react` | ^18.2.0 | Framework | Core UI component rendering library |
+| `react-dom` | ^18.2.0 | Framework | DOM reconciliation and rendering bindings |
+| `firebase` | ^10.12.0 | Backend / DB | Authentication, Firestore database, and Cloud Storage |
+| `@google/generative-ai` | ^0.24.1 | AI / LLM | Automated grading and rubric evaluation engine |
+| `react-router-dom` | ^6.22.3 | Routing | Client-side navigation and protected route wrappers |
+| `recharts` | ^2.12.3 | Visualization | Analytics charts and cohort performance graphs |
+| `jspdf` & `jspdf-autotable` | ^3.0.4 / ^5.0.2 | Export | Client-side PDF generation and structured grade tables |
+| `xlsx` | ^0.18.5 | Data Parsing | Excel spreadsheet parsing for bulk student uploads |
+| `framer-motion` | ^11.0.24 | Animation | Fluid UI transitions and dashboard micro-interactions |
+| `lucide-react` | ^0.368.0 | Icons | Enterprise iconography set |
+| `tailwindcss` | ^3.4.17 | Styling | Utility-first CSS styling framework |
+| `typescript` | ^5.0.0 | Language | Static typing and interface contracts |
 
 ---
 
-## 🛠️ Local Development & Quickstart
-
-To run the application locally on your machine, follow these steps:
+## 📋 Requirements & 🚀 Installation Guide
 
 ### Prerequisites
-* **Node.js** v18.0.0 or higher
-* A Firebase Project (with Firestore and Authentication enabled)
-* A Cloudinary Account (with an unsigned upload preset configured)
-* A Google AI Studio Gemini API Key
+* **Node.js**: Version 18.x or higher LTS
+* **npm**: Version 9.x or higher
+* **Firebase Project**: Configured project with Authentication and Firestore enabled
 
-### 1. Installation
-Clone the repository and install dependencies:
-```bash
-git clone https://github.com/Bavly-Hamdy/BIS-Smart-Grader-V2.git
-cd BIS-Smart-Grader-V2
-npm install
-```
+### Installation Steps
 
-### 2. Environment Variables Configuration
-Create a `.env` file in the root directory:
-```env
-# Gemini API Key (Generate from Google AI Studio)
-VITE_GEMINI_API_KEY="your_gemini_api_key"
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Bavly-Hamdy/BIS-Smart-Grader-V2.git
+   cd BIS-Smart-Grader-V2
+   ```
 
-# Firebase Client SDK Credentials
-VITE_FIREBASE_API_KEY="your_api_key"
-VITE_FIREBASE_AUTH_DOMAIN="your_project_id.firebaseapp.com"
-VITE_FIREBASE_DATABASE_URL="https://your_project_id-default-rtdb.firebaseio.com"
-VITE_FIREBASE_PROJECT_ID="your_project_id"
-VITE_FIREBASE_STORAGE_BUCKET="your_project_id.firebasestorage.app"
-VITE_FIREBASE_MESSAGING_SENDER_ID="your_sender_id"
-VITE_FIREBASE_APP_ID="your_app_id"
-VITE_FIREBASE_MEASUREMENT_ID="your_measurement_id"
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-# Cloudinary CDN Configuration
-VITE_CLOUDINARY_CLOUD_NAME="your_cloudinary_cloud_name"
-VITE_CLOUDINARY_UPLOAD_PRESET="your_unsigned_upload_preset"
-```
+3. **Configure environment variables**:
+   Create a `.env` file in the root directory based on `.env.example`:
+   ```env
+   VITE_FIREBASE_API_KEY=your_firebase_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+   VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+   VITE_FIREBASE_APP_ID=your_firebase_app_id
+   VITE_GEMINI_API_KEY=your_google_gemini_api_key
+   ```
 
-### 3. Start Development Server
-```bash
-npm run dev
-```
-The application will be accessible at `http://localhost:5173`.
+4. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
 
 ---
 
-<sub>© 2026 Assiut University - BIS Department. All Rights Reserved. Fully localized supporting Arabic (RTL) & English (LTR).</sub>
+## 📁 Project Structure
+
+```text
+Bavly-Hamdy/BIS-Smart-Grader-V2/
+├── .env.example
+├── .firebaserc
+├── .gitignore
+├── App.tsx
+├── README.md
+├── components/
+│   ├── AuthPage.tsx
+│   ├── Button.tsx
+│   ├── Dashboard/
+│   │   ├── CourseCard.tsx
+│   │   ├── CourseDetail.tsx
+│   │   ├── CourseManagement.tsx
+│   │   ├── DashboardHome.tsx
+│   │   ├── DashboardLayout.tsx
+│   │   ├── ExamCard.tsx
+│   │   ├── ExamDetail.tsx
+│   │   ├── ExamManagement.tsx
+│   │   ├── GradeAnalytics.tsx
+│   │   ├── GradeSheet.tsx
+│   │   ├── ProfilePage.tsx
+│   │   ├── SettingsPage.tsx
+│   │   ├── StudentDetail.tsx
+│   │   ├── StudentList.tsx
+│   │   └── modals/
+│   │       ├── BulkUploadModal.tsx
+│   │       ├── CreateExamModal.tsx
+│   │       ├── EditCourseModal.tsx
+│   │       ├── GradeDetailModal.tsx
+│   │   └── ...
+│   ├── DemoSection.tsx
+│   ├── ErrorBoundary.tsx
+│   ├── Hero.tsx
+│   ├── LandingPage.tsx
+│   ├── Navbar.tsx
+│   ├── NewsCard.tsx
+│   ├── RequireAuth.tsx
+│   └── ScrollToTop.tsx
+├── context/
+│   ├── LanguageContext.tsx
+│   ├── ThemeContext.tsx
+│   └── ToastContext.tsx
+├── firebase/
+│   └── firebaseConfig.ts
+├── firebase.json
+├── firestore.rules
+├── index.css
+├── index.html
+├── index.tsx
+├── package.json
+├── postcss.config.js
+├── public/
+│   └── logo-icon.png
+├── services/
+│   ├── cloudinaryService.ts
+│   ├── courseService.ts
+│   ├── exportService.ts
+│   ├── geminiGradingService.ts
+│   └── notificationService.ts
+├── tailwind.config.js
+├── tsconfig.json
+├── types.ts
+└── utils/
+    ├── bisCurriculum.ts
+    └── vite-env.d.ts
+```
+
+---
+
+## 🧩 Main Modules & Technical Breakdown
+
+### Core Configuration & Application Shell
+* **`README.md`**: Provides the comprehensive system documentation, architecture overview, and deployment guidelines.
+* **`firebase.json`**: Configures Firebase project parameters, hosting distribution directories, and Firestore security rule bindings.
+* **`index.html`**: The root HTML shell, loading Google Fonts, establishing viewport settings, and mounting the React application root.
+* **`index.tsx`**: The main React DOM bootstrap file that mounts `<App />` within strict mode and wraps global providers.
+* **`index.css`**: Defines global Tailwind directives, custom scrollbar utilities, high-contrast/reduced-motion modes, and Arabic font fallbacks.
+
+### Backend & Services
+* **`firebase/firebaseConfig.ts`**: Initializes the Firebase app instance using environment variables and exports authenticated Firebase services (`auth`, `db`, `storage`).
+* **`services/geminiGradingService.ts`**: Connects to the Google Generative AI API to evaluate student exam responses against instructor-defined rubrics.
+* **`services/courseService.ts`**: Manages CRUD operations for courses, exams, and student grades within Firestore.
+* **`services/exportService.ts`**: Implements client-side report generation, transforming raw grading data into formatted PDF and Excel documents.
+* **`services/cloudinaryService.ts`**: Handles media and document asset uploads to external cloud storage.
+
+### Styling & Build Tooling
+* **`package.json`**: Declares project scripts, dependencies, devDependencies, and GitHub Pages publishing targets.
+* **`tailwind.config.js`**: Extends the Tailwind design system with custom academic color palettes, dark mode variants, and typography scales.
+* **`postcss.config.js`**: Configures PostCSS with Tailwind CSS and Autoprefixer for cross-browser style compilation.
+
+---
+
+## 🖥️ CLI & Script Execution Matrix
+
+The following scripts are defined in `package.json` and can be executed via npm:
+
+| Command | Action | Description |
+| :--- | :--- | :--- |
+| `npm run dev` | Development | Starts the Vite local development server with HMR |
+| `npm run build` | Production Build | Compiles and bundles TypeScript and React assets into `dist/` |
+| `npm run preview` | Local Preview | Serves the production build locally for verification |
+| `npm run deploy` | Deployment | Automatically builds and pushes the `dist/` directory to GitHub Pages via `gh-pages` |
+
+---
+
+## 🛡️ Security & Configuration Isolation
+
+* **Environment Variable Protection**: All API keys (Firebase and Google Gemini) are isolated using Vite's `VITE_` prefix, preventing sensitive secrets from leaking into client-side application bundles.
+* **Firestore Security Rules**: Database access is restricted via `firestore.rules`, ensuring only authenticated faculty and authorized institutional accounts can read or write course grades.
+* **Route Protection**: `<RequireAuth>` component wrappers enforce strict authentication checks on all dashboard and administrative routes.
+
+---
+
+## 🚀 Deployment & Environment Matrix
+
+The application supports continuous deployment pipelines targeting static hosting providers:
+
+| Environment | Build Command | Output Directory | Target Platform |
+| :--- | :--- | :--- | :--- |
+| **Development** | `npm run dev` | In-Memory (Vite Dev Server) | Localhost (`http://localhost:5173`) |
+| **Staging / Production** | `npm run build` | `dist/` | Firebase Hosting / GitHub Pages |
+
+To deploy to GitHub Pages:
+```bash
+npm run deploy
+```
+
+---
+
+## 👥 Authors & Contributors
+
+* **Bavly Hamdy** - *Lead Architect & Maintainer* - [Bavly-Hamdy](https://github.com/Bavly-Hamdy)
+* **Community Contributors** - Enterprise academic and engineering contributors.
+
+---
+
+## 🤝 Contributing
+
+Contributions are warmly welcomed! To ensure a smooth workflow for all contributors, please follow these guidelines:
+
+### 1. Reporting Bugs & Issues
+* Use the GitHub [Issues](https://github.com/Bavly-Hamdy/BIS-Smart-Grader-V2/issues) tab to report bugs or request features.
+* Include clear steps to reproduce, expected behavior, environment details, and relevant console logs or screenshots.
+
+### 2. Submitting Pull Requests (PRs)
+1. Fork the repository and create your feature branch from `main`:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+2. Commit your changes following conventional commit messages (e.g., `feat(grading): add custom rubric weights`).
+3. Ensure your code passes all TypeScript checks and builds cleanly without warnings:
+   ```bash
+   npm run build
+   ```
+4. Push to your fork and submit a Pull Request targeting the `main` branch with a comprehensive description of your changes.
+
+### 3. Code Style & Standards
+* **TypeScript**: Strict typing is enforced across all components and services. Avoid using `any` type definitions.
+* **Linting & Formatting**: Follow existing React component patterns, utilizing Tailwind CSS for styling and maintaining modular separation between services and UI components.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+
+---
+© 2026 Bavly-Hamdy. All rights reserved.
